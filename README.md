@@ -8,3 +8,5 @@ owner        = Hazyshades
 Create a pull request
 
 # Case A. Issue Bounty Escrow
+
+# Case B. Review-to-Earn
