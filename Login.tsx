@@ -1,23 +1,33 @@
-import React, { useState } } from 'react';
+﻿import React, { useState } from "react";
+
+interface User {
+  name: string;
+}
 
 export default function BadComponent() {
-  const [user, setUser] = useState<User>(); 
+  const [user, setUser] = useState<User | null>(null);
 
   const handleLog = () => {
-    console.log(text); 
-    
+    console.log(user?.name ?? "No user");
+
     try {
-      let data = JSON.parse("не-json строка");
-    } 
-    catch (err: Error) { 
-      console.error(err.message);
+      const data = JSON.parse('{"key": "valid-json"}');
+      console.log(data);
+    } catch (err) {
+      if (err instanceof Error) {
+        console.error(err.message);
+      }
     }
   };
 
   if (user) {
     return (
-      <h1>Привет, {user.name}</h1>
-      <button onClick={handleLog()}>Клик</button> 
+      <>
+        <h1>Hello, {user.name}</h1>
+        <button onClick={handleLog}>Click</button>
+      </>
     );
   }
+
+  return <p>Please log in.</p>;
 }
