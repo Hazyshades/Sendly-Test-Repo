@@ -1,23 +1,42 @@
-import React, { useState } } from 'react';
+import React, { useState, FormEvent } from 'react';
 
-export default function BadComponent() {
-  const [user, setUser] = useState<User>(); 
+interface LoginFormData {
+  email: string;
+  password: string;
+}
 
-  const handleLog = () => {
-    console.log(text); 
-    
-    try {
-      let data = JSON.parse("не-json строка");
-    } 
-    catch (err: Error) { 
-      console.error(err.message);
-    }
+interface LoginProps {
+  onLogin: (data: LoginFormData) => void;
+}
+
+const Login: React.FC<LoginProps> = ({ onLogin }) => {
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
+
+  const handleSubmit = (e: FormEvent<HTMLFormElement>): void => {
+    e.preventDefault();
+    onLogin({ email, password });
   };
 
-  if (user) {
-    return (
-      <h1>Привет, {user.name}</h1>
-      <button onClick={handleLog()}>Клик</button> 
-    );
-  }
-}
+  return (
+    <form onSubmit={handleSubmit}>
+      <input
+        type="email"
+        value={email}
+        onChange={(e) => setEmail(e.target.value)}
+        placeholder="Email"
+        required
+      />
+      <input
+        type="password"
+        value={password}
+        onChange={(e) => setPassword(e.target.value)}
+        placeholder="Password"
+        required
+      />
+      <button type="submit">Log In</button>
+    </form>
+  );
+};
+
+export default Login;
