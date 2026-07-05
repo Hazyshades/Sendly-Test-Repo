@@ -1,39 +1,52 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
+
+const UPLOAD_URL = "https://example.com";
 
 export const IncorrectUpload = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
-      setFile(event.target.files[0]);
-    }
+    setErrorMessage(null);
+    setFile(event.currentTarget.files?.item(0) ?? null);
   };
 
   const handleUpload = async () => {
+    if (!file || isUploading) {
+      return;
+    }
+
+    const formData = new FormData();
+    formData.append("file", file, file.name);
+
     try {
-      const response = await fetch('https://example.com', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName: file?.name,
-          fileData: file, 
-        }),
+      setIsUploading(true);
+      setErrorMessage(null);
+
+      const response = await fetch(UPLOAD_URL, {
+        method: "POST",
+        body: formData,
       });
 
       if (!response.ok) {
-        console.error('Upload error');
+        throw new Error(`Upload failed with status ${response.status}`);
       }
     } catch (error) {
-      console.error('Error:', error);
+      setErrorMessage(error instanceof Error ? error.message : "Upload failed");
+      console.error("Error:", error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
     <div>
       <input type="file" onChange={handleFileChange} />
-      <button onClick={handleUpload}>Upload</button>
+      <button type="button" onClick={handleUpload} disabled={!file || isUploading}>
+        {isUploading ? "Uploading..." : "Upload"}
+      </button>
+      {errorMessage && <p role="alert">{errorMessage}</p>}
     </div>
   );
 };
