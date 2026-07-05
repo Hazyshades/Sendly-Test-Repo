@@ -1,4 +1,6 @@
-import React, { useState } } from 'react';
+
+fix 2 (bounty)
+  import React, { useState } } from 'react';
 
 export default function BadComponent() {
   const [user, setUser] = useState<User>(); 
