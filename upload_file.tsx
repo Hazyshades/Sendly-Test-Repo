@@ -3,22 +3,24 @@
 export const IncorrectUpload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFile(event.target.files?.[0] ?? null);
+    setMessage(null);
+    setError(null);
   };
 
   const handleUpload = async () => {
     if (!file) {
-      console.error('Please select a file before uploading');
+      setError('Please select a file before uploading');
       return;
     }
 
-    const formData = new FormData();
-    formData.append('file', file);
-    formData.append('fileName', file.name);
-
     setIsUploading(true);
+    setMessage(null);
+    setError(null);
 
     try {
       const formData = new FormData();
@@ -33,10 +35,12 @@ export const IncorrectUpload = () => {
         throw new Error(`Upload failed with status ${response.status}`);
       }
 
-      setMessage("Upload successful!");
+      setMessage('Upload successful!');
       setFile(null);
-    } catch (error) {
-      console.error('Error:', error);
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : 'Upload failed';
+      setError(msg);
+      console.error('Error:', err);
     } finally {
       setIsUploading(false);
     }
@@ -48,6 +52,8 @@ export const IncorrectUpload = () => {
       <button onClick={handleUpload} disabled={!file || isUploading}>
         {isUploading ? 'Uploading...' : 'Upload'}
       </button>
+      {message && <p role="status">{message}</p>}
+      {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
     </div>
   );
 };
