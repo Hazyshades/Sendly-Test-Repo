@@ -4,22 +4,28 @@ export const IncorrectUpload = () => {
   const [file, setFile] = useState<File | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files) {
+    if (event.target.files && event.target.files.length > 0) {
       setFile(event.target.files[0]);
+    } else {
+      setFile(null);
     }
   };
 
   const handleUpload = async () => {
+    if (!file) {
+      console.error('No file selected for upload.');
+      return;
+    }
+
     try {
+      const formData = new FormData();
+      formData.append('fileName', file.name);
+      formData.append('fileData', file);
+
       const response = await fetch('https://example.com', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          fileName: file?.name,
-          fileData: file, 
-        }),
+        body: formData,
+        // The browser automatically sets the correct Content-Type with the boundary for FormData
       });
 
       if (!response.ok) {
