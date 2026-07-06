@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from "react";
 
 export const IncorrectUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -27,8 +27,11 @@ export const IncorrectUpload = () => {
       });
 
       if (!response.ok) {
-        console.error('Upload error');
+        throw new Error(`Upload failed with status ${response.status}`);
       }
+
+      setMessage("Upload successful!");
+      setFile(null);
     } catch (error) {
       console.error('Error:', error);
     } finally {
