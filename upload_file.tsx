@@ -21,6 +21,9 @@ export const IncorrectUpload = () => {
     setIsUploading(true);
 
     try {
+      const formData = new FormData();
+      formData.append('file', file, file.name);
+
       const response = await fetch('https://example.com', {
         method: 'POST',
         body: formData,
