@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from "react";
 
 export const IncorrectUpload = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFile(event.target.files?.[0] ?? null);
@@ -9,9 +10,15 @@ export const IncorrectUpload = () => {
 
   const handleUpload = async () => {
     if (!file) {
-      console.error('Please select a file before uploading.');
+      console.error('Please select a file before uploading');
       return;
     }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('fileName', file.name);
+
+    setIsUploading(true);
 
     try {
       const formData = new FormData();
@@ -23,18 +30,23 @@ export const IncorrectUpload = () => {
       });
 
       if (!response.ok) {
-        console.error('Upload error');
+        throw new Error(`Upload failed with status ${response.status}`);
       }
+
+      setMessage("Upload successful!");
+      setFile(null);
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
     <div>
       <input type="file" onChange={handleFileChange} />
-      <button type="button" onClick={handleUpload} disabled={!file}>
-        Upload
+      <button onClick={handleUpload} disabled={!file || isUploading}>
+        {isUploading ? 'Uploading...' : 'Upload'}
       </button>
     </div>
   );
