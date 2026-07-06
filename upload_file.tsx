@@ -2,31 +2,27 @@
 
 export const IncorrectUpload = () => {
   const [file, setFile] = useState<File | null>(null);
-  const [uploading, setUploading] = useState(false);
-  const [message, setMessage] = useState("");
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      setFile(event.target.files[0]);
-      setMessage("");
-    }
+    setFile(event.target.files?.[0] ?? null);
   };
 
   const handleUpload = async () => {
     if (!file) {
-      setMessage("Please select a file first.");
+      console.error('Please select a file before uploading');
       return;
     }
 
-    setUploading(true);
-    setMessage("");
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('fileName', file.name);
+
+    setIsUploading(true);
 
     try {
-      const formData = new FormData();
-      formData.append("file", file);
-
-      const response = await fetch("https://example.com", {
-        method: "POST",
+      const response = await fetch('https://example.com', {
+        method: 'POST',
         body: formData,
       });
 
@@ -37,24 +33,18 @@ export const IncorrectUpload = () => {
       setMessage("Upload successful!");
       setFile(null);
     } catch (error) {
-      setMessage(error instanceof Error ? error.message : "An unexpected upload error occurred.");
+      console.error('Error:', error);
     } finally {
-      setUploading(false);
+      setIsUploading(false);
     }
   };
 
   return (
     <div>
-      <input
-        type="file"
-        onChange={handleFileChange}
-        disabled={uploading}
-      />
-      <button onClick={handleUpload} disabled={!file || uploading}>
-        {uploading ? "Uploading..." : "Upload"}
+      <input type="file" onChange={handleFileChange} />
+      <button onClick={handleUpload} disabled={!file || isUploading}>
+        {isUploading ? 'Uploading...' : 'Upload'}
       </button>
-      {message && <p>{message}</p>}
-      {file && <p>Selected: {file.name}</p>}
     </div>
   );
 };
