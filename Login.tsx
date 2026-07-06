@@ -1,27 +1,64 @@
+import React, { FormEvent, useState } from "react";
 
+type User = {
+  name: string;
+  token: string;
+};
 
+export default function Login() {
+  const [user, setUser] = useState<User | null>(null);
+  const [name, setName] = useState("");
+  const [token, setToken] = useState("");
+  const [error, setError] = useState<string | null>(null);
 
-Review to Earn → 15 USDC
-import React, { useState } } from 'react';
+  const handleLogin = (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
 
-export default function BadComponent() {
-  const [user, setUser] = useState<User>(); 
+    const trimmedName = name.trim();
+    const trimmedToken = token.trim();
 
-  const handleLog = () => {
-    console.log(text); 
-    
-    try {
-      let data = JSON.parse("не-json строка");
-    } 
-    catch (err: Error) { 
-      console.error(err.message);
+    if (!trimmedName || !trimmedToken) {
+      setError("Name and token are required.");
+      return;
     }
+
+    setUser({ name: trimmedName, token: trimmedToken });
+    setError(null);
   };
 
   if (user) {
     return (
-      <h1>Привет, {user.name}</h1>
-      <button onClick={handleLog()}>Клик</button> 
+      <section>
+        <h1>Hello, {user.name}</h1>
+        <p>Login token received.</p>
+        <button type="button" onClick={() => setUser(null)}>
+          Log out
+        </button>
+      </section>
     );
   }
+
+  return (
+    <form onSubmit={handleLogin}>
+      <label htmlFor="login-name">Name</label>
+      <input
+        id="login-name"
+        value={name}
+        onChange={(event) => setName(event.target.value)}
+        autoComplete="username"
+      />
+
+      <label htmlFor="login-token">Token</label>
+      <input
+        id="login-token"
+        value={token}
+        onChange={(event) => setToken(event.target.value)}
+        autoComplete="one-time-code"
+      />
+
+      {error && <p role="alert">{error}</p>}
+
+      <button type="submit">Log in</button>
+    </form>
+  );
 }
