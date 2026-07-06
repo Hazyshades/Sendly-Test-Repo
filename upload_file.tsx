@@ -1,19 +1,24 @@
-import React, { useState } from 'react';
+﻿import React, { useState } from "react";
 
 export const IncorrectUpload = () => {
   const [file, setFile] = useState<File | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    if (event.target.files && event.target.files.length > 0) {
-      setFile(event.target.files[0]);
-    }
+    setFile(event.target.files?.[0] ?? null);
   };
 
   const handleUpload = async () => {
     if (!file) {
-      console.error('No file selected');
+      console.error('Please select a file before uploading');
       return;
     }
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('fileName', file.name);
+
+    setIsUploading(true);
 
     try {
       const formData = new FormData();
@@ -21,23 +26,28 @@ export const IncorrectUpload = () => {
 
       const response = await fetch('https://example.com', {
         method: 'POST',
-        // Do not set 'Content-Type' manually — the browser sets it,
-        // including the required multipart boundary, when body is FormData.
         body: formData,
       });
 
       if (!response.ok) {
-        console.error('Upload error');
+        throw new Error(`Upload failed with status ${response.status}`);
       }
+
+      setMessage("Upload successful!");
+      setFile(null);
     } catch (error) {
       console.error('Error:', error);
+    } finally {
+      setIsUploading(false);
     }
   };
 
   return (
     <div>
       <input type="file" onChange={handleFileChange} />
-      <button onClick={handleUpload} disabled={!file}>Upload</button>
+      <button onClick={handleUpload} disabled={!file || isUploading}>
+        {isUploading ? 'Uploading...' : 'Upload'}
+      </button>
     </div>
   );
 };
