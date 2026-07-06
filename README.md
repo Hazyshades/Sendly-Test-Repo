@@ -14,4 +14,5 @@ Try #2
 Try #3
 
 # Case A.  Bountry:1
-Review to Earn → 15 USDC
+
+sendly-testing
