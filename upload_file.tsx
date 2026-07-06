@@ -1,40 +1,42 @@
-import React, { useState } from "react";
-
-const UPLOAD_URL = "https://example.com";
+﻿import React, { useState } from "react";
 
 export const IncorrectUpload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setErrorMessage(null);
-    setFile(event.currentTarget.files?.item(0) ?? null);
+    setFile(event.target.files?.[0] ?? null);
   };
 
   const handleUpload = async () => {
-    if (!file || isUploading) {
+    if (!file) {
+      console.error('Please select a file before uploading');
       return;
     }
 
     const formData = new FormData();
-    formData.append("file", file, file.name);
+    formData.append('file', file);
+    formData.append('fileName', file.name);
+
+    setIsUploading(true);
 
     try {
-      setIsUploading(true);
-      setErrorMessage(null);
+      const formData = new FormData();
+      formData.append('file', file, file.name);
 
-      const response = await fetch(UPLOAD_URL, {
-        method: "POST",
+      const response = await fetch('https://example.com', {
+        method: 'POST',
         body: formData,
       });
 
       if (!response.ok) {
         throw new Error(`Upload failed with status ${response.status}`);
       }
+
+      setMessage("Upload successful!");
+      setFile(null);
     } catch (error) {
-      setErrorMessage(error instanceof Error ? error.message : "Upload failed");
-      console.error("Error:", error);
+      console.error('Error:', error);
     } finally {
       setIsUploading(false);
     }
@@ -43,10 +45,9 @@ export const IncorrectUpload = () => {
   return (
     <div>
       <input type="file" onChange={handleFileChange} />
-      <button type="button" onClick={handleUpload} disabled={!file || isUploading}>
-        {isUploading ? "Uploading..." : "Upload"}
+      <button onClick={handleUpload} disabled={!file || isUploading}>
+        {isUploading ? 'Uploading...' : 'Upload'}
       </button>
-      {errorMessage && <p role="alert">{errorMessage}</p>}
     </div>
   );
 };
