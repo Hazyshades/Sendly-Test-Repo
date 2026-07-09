@@ -80,3 +80,4 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       {selectedFiles.length > 0 && <button onClick={handleRemove}>Remove</button>}
     </div>
   );
+};
