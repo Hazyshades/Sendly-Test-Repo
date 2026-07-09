@@ -22,6 +22,11 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files || []);
       const validFiles: File[] = [];
+      const errors: string[] = [];
+
+      for (const file of files) {
+        if (file.size > maxSizeMB * 1024 * 1024) {
+          errors.push(`File "${file.name}" exceeds ${maxSizeMB}MB limit.`);
       const invalidFileNames: string[] = [];
 
       for (const file of files) {
@@ -43,6 +48,9 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       }
 
       if (validFiles.length === 0) {
+        setError(errors.length > 0 ? errors.join(' ') : 'No valid files selected.');
+        setSelectedFiles([]);
+        setPreviews([]);
         // Reset the input so the same (invalid) file can be re-selected after fixing it.
         if (inputRef.current) {
           inputRef.current.value = '';
@@ -50,6 +58,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         return;
       }
 
+      setError(errors.length > 0 ? errors.join(' ') : null);
       setSelectedFiles(validFiles);
 
       // Generate previews for images
@@ -80,14 +89,18 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   useEffect(() => {
     // Cleanup preview URLs to avoid memory leaks
     return () => {
-      previews.forEach((url) => URL.revokeObjectURL(url));
+      previews.forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
     };
   }, [previews]);
 
   return (
     <div>
       <input ref={inputRef} type="file" accept={accept} multiple={multiple} onChange={handleFileChange} />
-      {error && <p style={{ color: 'red' }}>{error}</p>}
+      {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
       {previews.map((url, idx) =>
         url ? <img key={idx} src={url} alt="preview" style={{ width: 100, height: 100, objectFit: 'cover' }} /> : null
       )}
