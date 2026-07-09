@@ -22,21 +22,28 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files || []);
       const validFiles: File[] = [];
-      let validationError: string | null = null;
+      const invalidFileNames: string[] = [];
 
       for (const file of files) {
         if (file.size > maxSizeMB * 1024 * 1024) {
-          validationError = `File "${file.name}" exceeds ${maxSizeMB}MB limit.`;
+          invalidFileNames.push(file.name);
           continue;
         }
         validFiles.push(file);
       }
 
-      setError(validationError);
+      if (invalidFileNames.length > 0) {
+        setError(
+          `File${invalidFileNames.length > 1 ? 's' : ''} "${invalidFileNames.join(', ')}" exceed${
+            invalidFileNames.length > 1 ? '' : 's'
+          } ${maxSizeMB}MB limit.`
+        );
+      } else {
+        setError(null);
+      }
 
       if (validFiles.length === 0) {
-        setSelectedFiles([]);
-        setPreviews([]);
+        // Reset the input so the same (invalid) file can be re-selected after fixing it.
         if (inputRef.current) {
           inputRef.current.value = '';
         }
