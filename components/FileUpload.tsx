@@ -22,20 +22,27 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     (event: React.ChangeEvent<HTMLInputElement>) => {
       const files = Array.from(event.target.files || []);
       const validFiles: File[] = [];
+      let validationError: string | null = null;
 
       for (const file of files) {
         if (file.size > maxSizeMB * 1024 * 1024) {
-          setError(`File "${file.name}" exceeds ${maxSizeMB}MB limit.`);
+          validationError = `File "${file.name}" exceeds ${maxSizeMB}MB limit.`;
           continue;
         }
         validFiles.push(file);
       }
 
+      setError(validationError);
+
       if (validFiles.length === 0) {
+        setSelectedFiles([]);
+        setPreviews([]);
+        if (inputRef.current) {
+          inputRef.current.value = '';
+        }
         return;
       }
 
-      setError(null);
       setSelectedFiles(validFiles);
 
       // Generate previews for images
@@ -80,3 +87,4 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       {selectedFiles.length > 0 && <button onClick={handleRemove}>Remove</button>}
     </div>
   );
+};
