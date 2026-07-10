@@ -1,22 +1,30 @@
 # Sendly-Test-Repo
 
-webhook for github agent
+Webhook integration repo for GitHub agent bounty workflows (Sendly).
 
-repoId = 1287958084
-repoFullName = Hazyshades/Sendly-Test-Repo
-owner = Hazyshades
+## Repository metadata
 
-Create a pull request
+- **Owner:** Hazyshades
+- **Full name:** Hazyshades/Sendly-Test-Repo
+- **Repo ID:** 1287958084
 
-# Case A. Issue Bounty Escrow
+## Bounty cases
 
-# Case B. Review-to-Earn
+| Case | Description |
+|------|-------------|
+| **A** | Issue bounty escrow |
+| **B** | Review-to-earn |
 
-Try #2
-Try #3
+## Development
 
-# Case A. Bounty:20
-# Case A.  Bountry:1
-I HELP YOU
+```bash
+npm test
+```
 
-I hellp you too 
+Runs component and upload tests (`upload_file.test.js`, `login_upload.test.js`, `components/file_upload.test.js`).
+
+## Contributing
+
+1. Comment `/attempt` on the bounty issue you want to work on.
+2. Fork the repo and open a PR that references the issue (`Fixes #NN`).
+3. Include your Base payout address in the PR description when requested.
