@@ -4,18 +4,26 @@ export interface FileUploadProps {
   accept?: string;
   maxSizeMB?: number;
   multiple?: boolean;
+  uploadUrl?: string;
   onFilesSelected?: (files: File[]) => void;
+  onUploadSuccess?: () => void;
+  onUploadError?: (message: string) => void;
 }
 
 export const FileUpload: React.FC<FileUploadProps> = ({
   accept = 'image/*,.pdf,.doc,.docx',
   maxSizeMB = 5,
   multiple = false,
+  uploadUrl,
   onFilesSelected,
+  onUploadSuccess,
+  onUploadError,
 }) => {
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [previews, setPreviews] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
+  const [isUploading, setIsUploading] = useState(false);
+  const [message, setMessage] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = useCallback(
@@ -27,31 +35,17 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       for (const file of files) {
         if (file.size > maxSizeMB * 1024 * 1024) {
           errors.push(`File "${file.name}" exceeds ${maxSizeMB}MB limit.`);
-      const invalidFileNames: string[] = [];
-
-      for (const file of files) {
-        if (file.size > maxSizeMB * 1024 * 1024) {
-          invalidFileNames.push(file.name);
           continue;
         }
         validFiles.push(file);
       }
 
-      if (invalidFileNames.length > 0) {
-        setError(
-          `File${invalidFileNames.length > 1 ? 's' : ''} "${invalidFileNames.join(', ')}" exceed${
-            invalidFileNames.length > 1 ? '' : 's'
-          } ${maxSizeMB}MB limit.`
-        );
-      } else {
-        setError(null);
-      }
+      setMessage(null);
 
       if (validFiles.length === 0) {
         setError(errors.length > 0 ? errors.join(' ') : 'No valid files selected.');
         setSelectedFiles([]);
         setPreviews([]);
-        // Reset the input so the same (invalid) file can be re-selected after fixing it.
         if (inputRef.current) {
           inputRef.current.value = '';
         }
@@ -61,7 +55,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       setError(errors.length > 0 ? errors.join(' ') : null);
       setSelectedFiles(validFiles);
 
-      // Generate previews for images
       const newPreviews = validFiles.map((file) => {
         if (file.type.startsWith('image/')) {
           return URL.createObjectURL(file);
@@ -70,24 +63,66 @@ export const FileUpload: React.FC<FileUploadProps> = ({
       });
       setPreviews(newPreviews);
 
-      if (onFilesSelected) {
-        onFilesSelected(validFiles);
-      }
+      onFilesSelected?.(validFiles);
     },
-    [maxSizeMB, onFilesSelected]
+    [maxSizeMB, onFilesSelected],
   );
+
+  const handleUpload = useCallback(async () => {
+    if (!uploadUrl) {
+      setError('Upload URL is not configured.');
+      return;
+    }
+
+    if (selectedFiles.length === 0) {
+      setError('Please select a file before uploading.');
+      return;
+    }
+
+    setIsUploading(true);
+    setMessage(null);
+    setError(null);
+
+    try {
+      const formData = new FormData();
+      const fieldName = multiple ? 'files' : 'file';
+
+      for (const file of selectedFiles) {
+        formData.append(fieldName, file, file.name);
+      }
+
+      const response = await fetch(uploadUrl, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error(`Upload failed with status ${response.status}`);
+      }
+
+      setMessage('Upload successful!');
+      onUploadSuccess?.();
+    } catch (err) {
+      const uploadError = err instanceof Error ? err.message : 'Upload failed.';
+      setError(uploadError);
+      onUploadError?.(uploadError);
+      console.error('Upload error:', err);
+    } finally {
+      setIsUploading(false);
+    }
+  }, [multiple, onUploadError, onUploadSuccess, selectedFiles, uploadUrl]);
 
   const handleRemove = useCallback(() => {
     setSelectedFiles([]);
     setPreviews([]);
     setError(null);
+    setMessage(null);
     if (inputRef.current) {
       inputRef.current.value = '';
     }
   }, []);
 
   useEffect(() => {
-    // Cleanup preview URLs to avoid memory leaks
     return () => {
       previews.forEach((url) => {
         if (url) {
@@ -99,12 +134,41 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   return (
     <div>
-      <input ref={inputRef} type="file" accept={accept} multiple={multiple} onChange={handleFileChange} />
-      {error && <p role="alert" style={{ color: 'red' }}>{error}</p>}
-      {previews.map((url, idx) =>
-        url ? <img key={idx} src={url} alt="preview" style={{ width: 100, height: 100, objectFit: 'cover' }} /> : null
+      <input
+        ref={inputRef}
+        type="file"
+        accept={accept}
+        multiple={multiple}
+        onChange={handleFileChange}
+      />
+      {error && (
+        <p role="alert" style={{ color: 'red' }}>
+          {error}
+        </p>
       )}
-      {selectedFiles.length > 0 && <button onClick={handleRemove}>Remove</button>}
+      {message && <p role="status">{message}</p>}
+      {previews.map((url, idx) =>
+        url ? (
+          <img
+            key={idx}
+            src={url}
+            alt="preview"
+            style={{ width: 100, height: 100, objectFit: 'cover' }}
+          />
+        ) : null,
+      )}
+      {selectedFiles.length > 0 && (
+        <>
+          <button type="button" onClick={handleRemove} disabled={isUploading}>
+            Remove
+          </button>
+          {uploadUrl && (
+            <button type="button" onClick={handleUpload} disabled={isUploading}>
+              {isUploading ? 'Uploading...' : 'Upload'}
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
 };
