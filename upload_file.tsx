@@ -1,4 +1,4 @@
-﻿import React, { useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 
 export const IncorrectUpload = () => {
   const [file, setFile] = useState<File | null>(null);
@@ -42,7 +42,7 @@ export const IncorrectUpload = () => {
         inputRef.current.value = '';
       }
     } catch (err) {
-      const msg = err instanceof Error ? err.message : 'Upload failed';
+      const msg = err instanceof Error ? err.message : 'File upload failed';
       setError(msg);
       console.error('Error:', err);
     } finally {
