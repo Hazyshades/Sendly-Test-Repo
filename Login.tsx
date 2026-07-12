@@ -1,10 +1,11 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 
 export const IncorrectUpload = () => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     setFile(event.target.files?.[0] ?? null);
@@ -37,6 +38,9 @@ export const IncorrectUpload = () => {
 
       setMessage("Upload successful.");
       setFile(null);
+      if (inputRef.current) {
+        inputRef.current.value = "";
+      }
     } catch (err) {
       const message = err instanceof Error ? err.message : "Upload failed.";
       setError(message);
@@ -48,7 +52,7 @@ export const IncorrectUpload = () => {
 
   return (
     <div>
-      <input type="file" onChange={handleFileChange} />
+      <input ref={inputRef} type="file" onChange={handleFileChange} />
       <button type="button" onClick={handleUpload} disabled={!file || isUploading}>
         {isUploading ? "Uploading..." : "Upload"}
       </button>
