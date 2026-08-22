@@ -1,6 +1,12 @@
 import React, { useRef, useState } from "react";
 
-export const IncorrectUpload = () => {
+export interface IncorrectUploadProps {
+  uploadUrl?: string;
+}
+
+export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
+  uploadUrl = process.env.REACT_APP_UPLOAD_URL || process.env.NEXT_PUBLIC_UPLOAD_URL || ""
+}) => {
   const [file, setFile] = useState<File | null>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -19,6 +25,11 @@ export const IncorrectUpload = () => {
       return;
     }
 
+    if (!uploadUrl || uploadUrl.trim() === "") {
+      setError("Upload URL is not configured.");
+      return;
+    }
+
     setIsUploading(true);
     setMessage(null);
     setError(null);
@@ -27,7 +38,7 @@ export const IncorrectUpload = () => {
       const formData = new FormData();
       formData.append("file", file, file.name);
 
-      const response = await fetch("https://example.com", {
+      const response = await fetch(uploadUrl, {
         method: "POST",
         body: formData,
       });
