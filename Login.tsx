@@ -3,6 +3,7 @@ import { useFileUpload } from "./lib/useFileUpload";
 
 export interface IncorrectUploadProps {
   uploadUrl?: string;
+  maxSizeMB?: number;
 }
 
 type SendlyRuntime = typeof globalThis & {
@@ -25,9 +26,17 @@ const getDefaultUploadUrl = (): string => {
  *
  * Upload I/O is delegated to `useFileUpload`, which owns AbortController
  * cancellation and isMountedRef guards so unmount mid-upload never calls setState.
+ *
+ * Accessibility:
+ *  - `<label htmlFor="login-file-input">` is explicitly associated with the
+ *    file input via a matching `id`.
+ *  - An `aria-label` is also present as a fallback.
+ *  - Status and error regions are referenced via `aria-describedby` so
+ *    assistive technologies announce them after the input is described.
  */
 export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
   uploadUrl = getDefaultUploadUrl(),
+  maxSizeMB = 5,
 }) => {
   const {
     file,
@@ -40,65 +49,20 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
     uploadingRef,
   } = useFileUpload({
     uploadUrl,
-    maxSizeMB: 5,
+    maxSizeMB,
     clearOnSuccess: true,
     multiple: false,
     successMessage: "Upload successful.",
     emptySelectionMessage: "Please select a file before uploading.",
   });
 
-  return (
-    <div>
-      <input ref={inputRef} type="file" onChange={handleFileChange} />
-      <button
-        type="button"
-        onClick={handleUpload}
-        disabled={!file || isUploading || uploadingRef.current}
-      >
-        {isUploading ? "Uploading..." : "Upload"}
-      </button>
-      {message && <p role="status">{message}</p>}
-      {error && <p role="alert">{error}</p>}
-    </div>
-  );
-};
-import React from "react";
-import { useFileUpload } from "./lib/useFileUpload";
+  const describedBy = [
+    error ? "login-file-error" : null,
+    message ? "login-file-status" : null,
+  ]
+    .filter(Boolean)
+    .join(" ");
 
-export interface IncorrectUploadProps {
-  uploadUrl?: string;
-  maxSizeMB?: number;
-}
-
-export const IncorrectUpload: React.FC<LoginUploadProps> = ({
-  endpoint = "https://example.com",
-  maxSizeMB = 5,
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const {
-    selectedFiles,
-    isUploading,
-    statusMessage,
-    errorMessage,
-    handleFileChange: onFileChange,
-    uploadFiles,
-  } = useFileUpload({
-    endpoint,
-    maxSizeMB,
-    multiple: false,
-  });
-
-  const file = selectedFiles[0] ?? null;
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onFileChange(event);
-  };
-
-  const handleUpload = async () => {
-    await uploadFiles();
-  };
-
-const getDefaultUploadUrl = (): string => {
-  const runtime = globalThis as SendlyRuntime;
   return (
     <div>
       <label htmlFor="login-file-input">Choose file</label>
@@ -107,65 +71,27 @@ const getDefaultUploadUrl = (): string => {
         ref={inputRef}
         type="file"
         aria-label="Choose file"
-        aria-describedby={[
-          errorMessage ? "login-file-error" : null,
-          statusMessage ? "login-file-status" : null,
-        ]
-          .filter(Boolean)
-          .join(" ") || undefined}
+        aria-describedby={describedBy || undefined}
         onChange={handleFileChange}
       />
       <button
         type="button"
         onClick={handleUpload}
-        disabled={!file || isUploading}
+        disabled={!file || isUploading || uploadingRef.current}
         aria-busy={isUploading}
       >
         {isUploading ? "Uploading..." : "Upload"}
       </button>
-      {statusMessage && (
+      {message && (
         <p id="login-file-status" role="status">
-          {statusMessage}
+          {message}
         </p>
       )}
-      {errorMessage && (
+      {error && (
         <p id="login-file-error" role="alert">
-          {errorMessage}
+          {error}
         </p>
       )}
-    </div>
-  );
-};
-
-export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
-  uploadUrl = getDefaultUploadUrl(),
-  maxSizeMB = 5,
-}) => {
-  const {
-    file,
-    isUploading,
-    message,
-    error,
-    inputRef,
-    handleFileChange,
-    handleUpload,
-  } = useFileUpload({
-    uploadUrl,
-    maxSizeMB: 5,
-    clearOnSuccess: true,
-    multiple: false,
-    successMessage: "Upload successful.",
-    emptySelectionMessage: "Please select a file before uploading.",
-  });
-
-  return (
-    <div>
-      <input ref={inputRef} type="file" onChange={handleFileChange} />
-      <button type="button" onClick={handleUpload} disabled={!file || isUploading}>
-        {isUploading ? "Uploading..." : "Upload"}
-      </button>
-      {message && <p role="status">{message}</p>}
-      {error && <p role="alert">{error}</p>}
     </div>
   );
 };
