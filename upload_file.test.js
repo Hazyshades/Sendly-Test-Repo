@@ -20,7 +20,7 @@ test('file change stores a single File from the FileList', () => {
 
 test('shared uploader aborts on unmount and ignores AbortError', () => {
   assert.match(hookSource, /new AbortController\(\)/);
-  assert.match(hookSource, /signal: controller\.signal/);
+  assert.match(hookSource, /signal: abortControllerRef\.current\.signal/);
   assert.match(hookSource, /return \(\) => \{[\s\S]*abortControllerRef\.current\?\.abort\(\)/);
   assert.match(hookSource, /uploadError\.name === 'AbortError'[\s\S]*return/);
 });
@@ -39,13 +39,4 @@ test('upload handler uses a synchronous ref guard against re-entry in the hook',
   );
   assert.match(hookSource, /finally \{[\s\S]*uploadingRef\.current = false;/);
   assert.doesNotMatch(source, /https:\/\/example\.com/);
-});
-
-test('upload handler uses a synchronous ref guard against re-entry in the hook', () => {
-  assert.match(hookSource, /uploadInFlightRef/);
-  assert.match(
-    hookSource,
-    /if \(uploadInFlightRef\.current\) \{[\s\S]*?return;[\s\S]*?uploadInFlightRef\.current = true;/,
-  );
-  assert.match(hookSource, /finally \{[\s\S]*uploadInFlightRef\.current = false;/);
 });

@@ -1,8 +1,9 @@
-import React from "react";
+import React, { useId } from "react";
 import { useFileUpload } from "./lib/useFileUpload";
 
 export interface IncorrectUploadProps {
   uploadUrl?: string;
+  maxSizeMB?: number;
 }
 
 type SendlyRuntime = typeof globalThis & {
@@ -28,7 +29,12 @@ const getDefaultUploadUrl = (): string => {
  */
 export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
   uploadUrl = getDefaultUploadUrl(),
+  maxSizeMB = 5,
 }) => {
+  const inputId = useId();
+  const errorId = `${inputId}-error`;
+  const statusId = `${inputId}-status`;
+
   const {
     file,
     isUploading,
@@ -40,132 +46,46 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
     uploadingRef,
   } = useFileUpload({
     uploadUrl,
-    maxSizeMB: 5,
+    maxSizeMB,
     clearOnSuccess: true,
     multiple: false,
     successMessage: "Upload successful.",
     emptySelectionMessage: "Please select a file before uploading.",
   });
 
+  const describedBy = [error ? errorId : null, message ? statusId : null]
+    .filter(Boolean)
+    .join(" ");
+
   return (
     <div>
-      <input ref={inputRef} type="file" onChange={handleFileChange} />
-      <button
-        type="button"
-        onClick={handleUpload}
-        disabled={!file || isUploading || uploadingRef.current}
-      >
-        {isUploading ? "Uploading..." : "Upload"}
-      </button>
-      {message && <p role="status">{message}</p>}
-      {error && <p role="alert">{error}</p>}
-    </div>
-  );
-};
-import React from "react";
-import { useFileUpload } from "./lib/useFileUpload";
-
-export interface IncorrectUploadProps {
-  uploadUrl?: string;
-  maxSizeMB?: number;
-}
-
-export const IncorrectUpload: React.FC<LoginUploadProps> = ({
-  endpoint = "https://example.com",
-  maxSizeMB = 5,
-}) => {
-  const inputRef = useRef<HTMLInputElement>(null);
-  const {
-    selectedFiles,
-    isUploading,
-    statusMessage,
-    errorMessage,
-    handleFileChange: onFileChange,
-    uploadFiles,
-  } = useFileUpload({
-    endpoint,
-    maxSizeMB,
-    multiple: false,
-  });
-
-  const file = selectedFiles[0] ?? null;
-  const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    onFileChange(event);
-  };
-
-  const handleUpload = async () => {
-    await uploadFiles();
-  };
-
-const getDefaultUploadUrl = (): string => {
-  const runtime = globalThis as SendlyRuntime;
-  return (
-    <div>
-      <label htmlFor="login-file-input">Choose file</label>
+      <label htmlFor={inputId}>Choose file</label>
       <input
-        id="login-file-input"
+        id={inputId}
         ref={inputRef}
         type="file"
-        aria-label="Choose file"
-        aria-describedby={[
-          errorMessage ? "login-file-error" : null,
-          statusMessage ? "login-file-status" : null,
-        ]
-          .filter(Boolean)
-          .join(" ") || undefined}
+        aria-describedby={describedBy || undefined}
+        aria-invalid={Boolean(error)}
         onChange={handleFileChange}
       />
       <button
         type="button"
         onClick={handleUpload}
-        disabled={!file || isUploading}
+        disabled={!file || isUploading || uploadingRef.current}
         aria-busy={isUploading}
       >
         {isUploading ? "Uploading..." : "Upload"}
       </button>
-      {statusMessage && (
-        <p id="login-file-status" role="status">
-          {statusMessage}
+      {message && (
+        <p id={statusId} role="status">
+          {message}
         </p>
       )}
-      {errorMessage && (
-        <p id="login-file-error" role="alert">
-          {errorMessage}
+      {error && (
+        <p id={errorId} role="alert">
+          {error}
         </p>
       )}
-    </div>
-  );
-};
-
-export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
-  uploadUrl = getDefaultUploadUrl(),
-  maxSizeMB = 5,
-}) => {
-  const {
-    file,
-    isUploading,
-    message,
-    error,
-    inputRef,
-    handleFileChange,
-    handleUpload,
-  } = useFileUpload({
-    uploadUrl,
-    maxSizeMB: 5,
-    clearOnSuccess: true,
-    multiple: false,
-    successMessage: "Upload successful.",
-    emptySelectionMessage: "Please select a file before uploading.",
-  });
-
-  return (
-    <div>
-      <input ref={inputRef} type="file" onChange={handleFileChange} />
-      <button type="button" onClick={handleUpload} disabled={!file || isUploading}>
-        {isUploading ? "Uploading..." : "Upload"}
-      </button>
-      {message && <p role="status">{message}</p>}
-      {error && <p role="alert">{error}</p>}
     </div>
   );
 };
