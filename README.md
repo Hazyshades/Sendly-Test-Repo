@@ -17,11 +17,22 @@ Webhook integration repo for GitHub agent bounty workflows (Sendly).
 
 ## Development
 
+Node.js version is pinned to `20.19.5` (defined in `.nvmrc`).
+
+To set up the repository and run all checks locally, use the following commands:
+
 ```bash
+# Install dependencies
+npm ci
+
+# Run TypeScript type checking
+npm run typecheck
+
+# Run all test suites (JavaScript and Python)
 npm test
 ```
 
-Runs the Node.js test runner across all JavaScript test suites (`node --test "**/*.test.js"`). Node.js version is pinned to `20.19.5` in `.nvmrc`.
+Runs the Node.js test runner across all JavaScript test suites (`node --test "**/*.test.js"`).
 
 ### Test Suites
 
