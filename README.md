@@ -22,20 +22,32 @@ npm ci   # reproducible install from the committed package-lock.json
 npm test
 ```
 
-Runs the Node.js test runner across all JavaScript test suites (`node --test`). Node.js version is pinned to `20.19.5` in `.nvmrc`.
+Runs all JavaScript test suites (`npm run test:js` / `node --test`) and the Python CLI test suite (`npm run test:py` / `python3 -m unittest test_fix.py`). Node.js version is pinned to `20.19.5` in `.nvmrc`.
+
+Individual test suites can also be run separately:
+```bash
+npm run test:js   # Runs Node.js test runner across all *.test.js files
+npm run test:py   # Runs Python CLI test suite (test_fix.py)
+```
 
 ### Test Suites
 
-#### JavaScript / Node.js Suites (run in CI via `npm test`)
+#### JavaScript / Node.js Suites (run in CI via `npm test` / `npm run test:js`)
 - `upload_file.test.js`
 - `login_upload.test.js`
 - `file_upload_component.test.js`
 - `double_submit_race.test.js`
 - `components/file_upload.test.js`
+- `test_suite_wiring.test.js`
+- `use_file_upload_errors.test.js`
 
-#### Python CLI Suite
-To run the Python CLI test suite (`test_fix.py`):
+#### Python CLI Suite (run in CI via `npm test` / `npm run test:py`)
+To run the Python CLI test suite directly (`test_fix.py`):
 
+```bash
+npm run test:py
+```
+or:
 ```bash
 python3 -m unittest test_fix.py
 ```
