@@ -3,6 +3,7 @@ node_modules/
 # Agent solution notes and dumps
 SOLUTION_ISSUE_*.md
 AGENTCLAW_*
+bhos_af_*
 
 # Scanner runs and ephemeral artifacts
 strix_runs/
