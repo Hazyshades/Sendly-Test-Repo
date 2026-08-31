@@ -18,6 +18,7 @@ Webhook integration repo for GitHub agent bounty workflows (Sendly).
 ## Development
 
 ```bash
+npm ci   # reproducible install from the committed package-lock.json
 npm test
 ```
 
