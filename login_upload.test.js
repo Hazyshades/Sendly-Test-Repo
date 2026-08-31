@@ -20,11 +20,30 @@ test('Login delegates file selection to the shared hook', () => {
   assert.match(source, /handleFileChange/);
 });
 
-test('Login rejects oversized files via the shared hook maxSizeMB option', () => {
-  assert.match(source, /maxSizeMB:\s*5/);
+test('Login declares maxSizeMB prop and passes it through to the hook (not hardcoded)', () => {
+  // The prop must be declared on the interface
+  assert.match(source, /maxSizeMB\?\s*:\s*number/);
+  // A documented default must exist (DEFAULT_MAX_SIZE_MB = 5)
+  assert.match(source, /DEFAULT_MAX_SIZE_MB\s*=\s*5/);
+  // The prop must be destructured with that default
+  assert.match(source, /maxSizeMB\s*=\s*DEFAULT_MAX_SIZE_MB/);
+  // The prop variable must be forwarded to the hook (not a literal)
+  assert.match(source, /maxSizeMB,/);
+  // The hook must honour the maxSizeMB option
   assert.match(hookSource, /maxSizeMB/);
   assert.match(hookSource, /file\.size > maxBytes/);
   assert.doesNotMatch(source, /fetch\(/);
+});
+
+test('Login rejects oversized files via the shared hook using the prop default (5 MB)', () => {
+  // Default is 5 MB — verify the constant
+  assert.match(source, /DEFAULT_MAX_SIZE_MB\s*=\s*5/);
+  // Hook converts MB to bytes and checks size
+  assert.match(hookSource, /maxSizeMB/);
+  assert.match(hookSource, /file\.size > maxBytes/);
+  // Callers can override: the prop must NOT be a bare literal 5 in the hook call
+  // Previously this was hardcoded as `maxSizeMB: 5`, which ignored the prop.
+  assert.doesNotMatch(source, /maxSizeMB:\s*5[^0-9]/);
 });
 
 test('Login upload guards empty and in-flight submissions via the hook', () => {
@@ -47,10 +66,11 @@ test('Login upload uses a configurable endpoint via the shared hook', () => {
   assert.doesNotMatch(source, /\bfetch\s*\(/);
 });
 
-test('Login aborts uploads on unmount without reporting AbortError', () => {
-  assert.match(source, /new AbortController\(\)/);
-  assert.match(source, /signal: controller\.signal/);
-  assert.match(source, /return \(\) => \{[\s\S]*abortControllerRef\.current\?\.abort\(\)/);
-  assert.match(source, /err\.name === ["']AbortError["'][\s\S]*return/);
-  assert.match(source, /if \(isMountedRef\.current\)[\s\S]*setIsUploading\(false\)/);
+test('Login aborts uploads on unmount without reporting AbortError (via shared hook)', () => {
+  // AbortController lifecycle is owned by the hook, not Login.tsx directly
+  assert.match(hookSource, /new AbortController\(\)/);
+  assert.match(hookSource, /signal: controller\.signal/);
+  assert.match(hookSource, /return \(\) => \{[\s\S]*abortControllerRef\.current\?\.abort\(\)/);
+  assert.match(hookSource, /uploadError\.name === 'AbortError'[\s\S]*return/);
+  assert.match(hookSource, /if \(isMountedRef\.current\)[\s\S]*setIsUploading\(false\)/);
 });

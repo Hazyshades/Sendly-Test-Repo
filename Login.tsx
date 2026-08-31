@@ -1,8 +1,16 @@
 import React from "react";
 import { useFileUpload } from "./lib/useFileUpload";
 
+/**
+ * Default maximum upload size in megabytes.
+ * Callers may override this via the `maxSizeMB` prop.
+ */
+const DEFAULT_MAX_SIZE_MB = 5;
+
 export interface IncorrectUploadProps {
   uploadUrl?: string;
+  /** Maximum allowed file size in megabytes. Defaults to {@link DEFAULT_MAX_SIZE_MB} (5 MB). */
+  maxSizeMB?: number;
 }
 
 type SendlyRuntime = typeof globalThis & {
@@ -25,9 +33,13 @@ const getDefaultUploadUrl = (): string => {
  *
  * Upload I/O is delegated to `useFileUpload`, which owns AbortController
  * cancellation and isMountedRef guards so unmount mid-upload never calls setState.
+ *
+ * @param uploadUrl  POST endpoint. Falls back to runtime env vars when omitted.
+ * @param maxSizeMB  Maximum file size in MB. Defaults to 5 MB.
  */
 export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
   uploadUrl = getDefaultUploadUrl(),
+  maxSizeMB = DEFAULT_MAX_SIZE_MB,
 }) => {
   const {
     file,
@@ -39,7 +51,7 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
     handleUpload,
   } = useFileUpload({
     uploadUrl,
-    maxSizeMB: 5,
+    maxSizeMB,
     clearOnSuccess: true,
     multiple: false,
     successMessage: "Upload successful.",
