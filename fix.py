@@ -4,12 +4,12 @@ import sys
 REPO = "Hazyshades/Sendly-Test-Repo"
 
 def main():
-    if len(sys.argv) < 2:
-        print(f"Usage: python fix.py <issue_number>", file=sys.stderr)
+    if len(sys.argv) != 2:
+        print("Usage: python fix.py <issue-number>", file=sys.stderr)
         sys.exit(1)
     
     issue_arg = sys.argv[1].strip().lstrip("#")
-    if not issue_arg.isdigit():
+    if not issue_arg.isdigit() or int(issue_arg) <= 0:
         print(f"Error: Invalid issue number '{sys.argv[1]}'. Must be numeric.", file=sys.stderr)
         sys.exit(1)
         
