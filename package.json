@@ -2,7 +2,9 @@
   "name": "sendly-test-repo",
   "private": true,
   "scripts": {
-    "test": "node --test",
+    "test": "npm run test:js && npm run test:py",
+    "test:js": "node --test",
+    "test:py": "python -m unittest test_fix",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
