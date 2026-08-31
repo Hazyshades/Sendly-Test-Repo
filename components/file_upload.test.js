@@ -31,16 +31,9 @@ test('FileUpload guards empty uploads and in-flight submissions via the hook', (
   );
   assert.match(hookSource, /finally \{[\s\S]*uploadingRef\.current = false;/);
 });
-const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
-const test = require('node:test');
-const { assertValidationContract } = require('./file_upload_contract.cjs');
-
-const source = readFileSync('components/FileUpload.tsx', 'utf8');
-const hookSource = readFileSync('lib/useFileUpload.ts', 'utf8');
 
 test('FileUpload follows the shared file validation contract', () => {
-  assertValidationContract(source);
+  assertValidationContract(hookSource);
 });
 
 test('FileUpload uploads with multipart FormData via the shared hook', () => {

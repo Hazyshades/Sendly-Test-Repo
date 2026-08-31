@@ -309,3 +309,37 @@ export const useFileUpload = ({
     clearSelection,
   };
 }
+
+
+/*
+  const uploadInFlightRef = useRef(false);
+  if (uploadInFlightRef.current) { return; } uploadInFlightRef.current = true;
+  finally { uploadInFlightRef.current = false; signal: controller.signal;
+*/
+
+if (!uploadUrl) {
+  setError('Upload URL is not configured.');
+  return;
+}
+
+// file: selectedFiles[0] ?? null
+
+/*
+ * Validation contract (shared with FileUpload component):
+ *
+ *   const validFiles: File[] = [];
+ *   const errors: string[] = [];
+ *   const maxBytes = maxSizeMB !== undefined ? maxSizeMB * 1024 * 1024 : null;
+ *   for (const file of candidates) {
+ *     if (maxBytes !== null && file.size > maxBytes) {
+ *       errors.push(file.name);
+ *       continue;
+ *     }
+ *     validFiles.push(file);
+ *   }
+ *   if (validFiles.length === 0) {
+ *     resetSelection();
+ *     return;
+ *   }
+ *   onFilesSelected?.(validFiles);
+ */
