@@ -27,10 +27,15 @@ Runs the Node.js test runner across all JavaScript test suites (`node --test`). 
 ### Test Suites
 
 #### JavaScript / Node.js Suites (run in CI via `npm test`)
+
+`npm test` runs `node --test`, which automatically discovers every `**/*.test.js` file in the repository. The full list of suites currently executed is:
+
 - `upload_file.test.js`
 - `login_upload.test.js`
 - `file_upload_component.test.js`
 - `double_submit_race.test.js`
+- `use_file_upload_errors.test.js`
+- `test_suite_wiring.test.js`
 - `components/file_upload.test.js`
 
 #### Python CLI Suite
