@@ -95,19 +95,18 @@ export const useFileUpload = ({
 
   const clearSelection = useCallback(() => {
     setSelectedFiles([]);
-    setPreviews([]);
+    setPreviews((prev) => {
+      prev.forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      return [];
+    });
     if (inputRef.current) {
       inputRef.current.value = "";
     }
   }, []);
-
-  const clearSelection = useCallback(() => {
-    setSelectedFiles([]);
-    replacePreviews([]);
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
-  }, [replacePreviews]);
 
   const selectFiles = useCallback(
     (files: File[]) => {
@@ -164,7 +163,7 @@ export const useFileUpload = ({
 
       onFilesSelected?.(validFiles);
     },
-    [accept, clearSelection, maxSizeMB, onFilesSelected, replacePreviews],
+    [accept, clearSelection, maxSizeMB, onFilesSelected],
   );
 
   const handleFileChange = useCallback(
