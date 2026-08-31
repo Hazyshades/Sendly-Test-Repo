@@ -25,5 +25,8 @@ jobs:
         with:
           python-version: "3.12"
 
-      - name: Run tests
+      - name: Run JavaScript tests
         run: npm test
+
+      - name: Run Python tests
+        run: python -m unittest test_fix -v
