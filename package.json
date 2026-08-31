@@ -3,7 +3,7 @@
   "private": true,
   "scripts": {
     "test": "npm run test:js && npm run test:py",
-    "test:js": "node --test",
+    "test:js": "node --test \"**/*.test.js\"",
     "test:py": "python -m unittest test_fix.py",
     "typecheck": "tsc --noEmit"
   },
