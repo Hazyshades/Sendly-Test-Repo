@@ -76,6 +76,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
 
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadingRef = useRef(false);
+  const uploadInFlightRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
 
@@ -160,11 +161,15 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       return;
     }
 
-    if (uploadingRef.current || isUploading) {
+    if (uploadingRef.current) {
+      return;
+    }
+    if (uploadInFlightRef.current) {
       return;
     }
 
     uploadingRef.current = true;
+    uploadInFlightRef.current = true;
     setIsUploading(true);
     setMessage(null);
     setError(null);
@@ -218,6 +223,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
         abortControllerRef.current = null;
       }
       uploadingRef.current = false;
+      uploadInFlightRef.current = false;
       if (isMountedRef.current) {
         setIsUploading(false);
       }
