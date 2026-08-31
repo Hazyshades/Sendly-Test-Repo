@@ -1,0 +1,8 @@
+{
+  "scripts": {
+    "test": "jest",
+    "test:js": "jest",
+    "test:py": "pytest",
+    "test:typecheck": "tsc --noEmit"
+  }
+}
