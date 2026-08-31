@@ -17,30 +17,39 @@ Webhook integration repo for GitHub agent bounty workflows (Sendly).
 
 ## Development
 
+Node.js version is pinned to `20.19.5` in `.nvmrc` (single source of truth for
+local and CI tooling).
+
 ```bash
-npm test
+npm ci                              # reproducible install from the committed package-lock.json
+npm test                            # full pipeline: npm run test:js && npm run test:py
+npm run test:js                     # JavaScript suites only (node --test)
+npm run test:py                     # Python CLI suite (python3 -m unittest test_fix -v)
+npm run typecheck                   # TypeScript (tsc --noEmit)
 ```
 
-Runs the Node.js test runner across all JavaScript test suites (`node --test`). Node.js version is pinned to `20.19.5` in `.nvmrc`.
+`npm test` runs the JS and Python suites in sequence and fails (non-zero exit)
+when either one fails. CI runs the same pipeline plus `npm run typecheck`
+(see `.github/workflows/ci.yml`).
 
 ### Test Suites
 
-#### JavaScript / Node.js Suites (run in CI via `npm test`)
+#### JavaScript / Node.js Suites (run via `npm run test:js`)
 - `upload_file.test.js`
 - `login_upload.test.js`
 - `file_upload_component.test.js`
 - `double_submit_race.test.js`
+- `use_file_upload_errors.test.js`
+- `test_suite_wiring.test.js`
 - `components/file_upload.test.js`
 
 #### Python CLI Suite
-To run the Python CLI test suite (`test_fix.py`):
+Runs through the shared script:
 
 ```bash
-python3 -m unittest test_fix.py
-```
-or:
-```bash
-python test_fix.py
+npm run test:py
+# or directly
+python3 -m unittest test_fix -v
 ```
 
 ## Contributing

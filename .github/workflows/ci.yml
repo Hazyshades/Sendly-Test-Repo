@@ -15,15 +15,21 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: Set up Node.js (version pinned in .nvmrc)
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: file:.nvmrc
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
-      - name: Run tests
+      - name: Install dependencies
+        run: npm install --no-audit --no-fund
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Run test suites (npm test = test:js && test:py)
         run: npm test

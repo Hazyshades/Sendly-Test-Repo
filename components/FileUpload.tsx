@@ -1,354 +1,150 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
-
-const DEFAULT_MAX_SIZE_MB = 10;
-const inputId = 'file-upload-input';
-const errorId = 'file-upload-error';
-const statusId = 'file-upload-status';
-
-const isFileTypeAccepted = (file: File, accept: string) => {
-  const acceptedTypes = accept
-    .split(',')
-    .map((type) => type.trim().toLowerCase())
-    .filter(Boolean);
-
-  return acceptedTypes.some((acceptedType) => {
-    if (acceptedType.endsWith('/*')) {
-      return file.type.toLowerCase().startsWith(acceptedType.slice(0, -1));
-    }
-
-    if (acceptedType.startsWith('.')) {
-      return file.name.toLowerCase().endsWith(acceptedType);
-    }
-
-    return file.type.toLowerCase() === acceptedType;
-  });
-};
+import { useEffect, useMemo, useRef } from 'react';
+import type { ChangeEvent } from 'react';
+import { useFileUpload } from '../lib/useFileUpload';
 
 export interface FileUploadProps {
+  uploadUrl?: string;
   accept?: string;
   maxSizeMB?: number;
   multiple?: boolean;
-  uploadUrl?: string;
   onFilesSelected?: (files: File[]) => void;
   onUploadSuccess?: () => void;
   onUploadError?: (message: string) => void;
 }
 
-const DEFAULT_MAX_SIZE_MB = 10;
-export interface SelectedFile {
-  id: string;
-  file: File;
-  previewUrl: string;
+/**
+ * Size validation for the candidate list, mirroring the shared contract
+ * enforced by components/file_upload_contract.cjs.
+ */
+function validateCandidates(candidates: File[], maxSizeMB?: number) {
+  const validFiles: File[] = [];
+  const errors: string[] = [];
+  const maxBytes = maxSizeMB !== undefined ? maxSizeMB * 1024 * 1024 : null;
+
+  for (const file of candidates) {
+    if (maxBytes !== null && file.size > maxBytes) {
+      errors.push(`${file.name} exceeds ${maxSizeMB} MB.`);
+      continue;
+    }
+    validFiles.push(file);
+  }
+
+  return { validFiles, errors };
 }
 
-const DEFAULT_MAX_SIZE_MB = 10;
-
-const isFileTypeAccepted = (file: File, accept?: string): boolean => {
-  if (!accept || accept.trim() === '') {
-    return true;
-  }
-
-  const fileName = file.name.toLowerCase();
-  const fileType = file.type.toLowerCase();
-
-  return accept.split(',').some((rawToken) => {
-    const token = rawToken.trim().toLowerCase();
-
-    if (token.startsWith('.')) {
-      return fileName.endsWith(token);
-    }
-
-    if (token.endsWith('/*')) {
-      return fileType.startsWith(token.slice(0, -1));
-    }
-
-    return fileType === token;
-  });
-};
-
-const revokePreview = (selectedFile: SelectedFile) => {
-  if (selectedFile.previewUrl) {
-    URL.revokeObjectURL(selectedFile.previewUrl);
-  }
-};
-
-export const FileUpload: React.FC<FileUploadProps> = ({
-  accept = 'image/*,.pdf,.doc,.docx',
-  maxSizeMB = 5,
-  multiple = false,
+/**
+ * Thin file picker over the shared useFileUpload hook (see #252/#269):
+ * the hook owns selection, upload, and error state; this component renders
+ * the controls, previews, status lines, and a local re-entry guard.
+ */
+export function FileUpload({
   uploadUrl,
+  accept,
+  maxSizeMB,
+  multiple = false,
   onFilesSelected,
   onUploadSuccess,
   onUploadError,
-}) => {
-  const inputId = useId();
-  const errorId = `${inputId}-error`;
-  const statusId = `${inputId}-status`;
-
+}: FileUploadProps) {
   const {
-    selectedFiles,
-    previews,
     isUploading,
     message,
     error,
     inputRef,
-    handleFileChange,
-    handleUpload,
-    handleRemove,
     uploadingRef,
+    selectedFiles,
+    handleUpload,
+    commitSelection,
+    resetSelection,
   } = useFileUpload({
+    uploadUrl,
     accept,
     maxSizeMB,
     multiple,
-    uploadUrl,
+    clearOnSuccess: true,
+    successMessage: 'Upload successful.',
+    emptySelectionMessage: 'Please select a file before uploading.',
     onFilesSelected,
     onUploadSuccess,
     onUploadError,
   });
-  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const uploadInFlightRef = useRef(false);
-  const selectedFilesRef = useRef<SelectedFile[]>([]);
 
-  useEffect(() => {
-    selectedFilesRef.current = selectedFiles;
-  }, [selectedFiles]);
+  const previews = useMemo(
+    () =>
+      selectedFiles
+        .filter((file) => file.type.startsWith('image/'))
+        .map((file) => URL.createObjectURL(file)),
+    [selectedFiles],
+  );
 
   useEffect(() => {
     return () => {
-      selectedFilesRef.current.forEach(revokePreview);
-    };
-  }, []);
-
-  const clearSelection = useCallback(() => {
-    setSelectedFiles((prev) => {
-      prev.forEach(revokePreview);
-      return [];
-    });
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
-    onFilesSelected?.([]);
-  }, [onFilesSelected]);
-
-  const handleRemoveFile = useCallback(
-    (id: string) => {
-      setSelectedFiles((prev) => {
-        const toRemove = prev.find((item) => item.id === id);
-        if (toRemove) {
-          revokePreview(toRemove);
-        }
-        const updated = prev.filter((item) => item.id !== id);
-        onFilesSelected?.(updated.map((item) => item.file));
-        return updated;
+      previews.forEach((url) => {
+        URL.revokeObjectURL(url);
       });
-    },
-    [onFilesSelected],
-  );
+    };
+  }, [previews]);
 
-  const clearSelection = useCallback(() => {
-    setSelectedFiles((files) => {
-      files.forEach(revokePreview);
-      return [];
-    });
+  // Synchronous re-entry guard for this component's submit path.
+  const uploadInFlightRef = useRef(false);
 
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
-  }, []);
-
-  const handleFileChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
-      const maxBytes = maxSizeMB * 1024 * 1024;
-      const validFiles: File[] = [];
-      const oversizedFileNames: string[] = [];
-      const invalidFileNames: string[] = [];
-      const invalidTypeNames: string[] = [];
-
-      for (const file of files) {
-        if (file.size > maxBytes) {
-          oversizedFileNames.push(file.name);
-          continue;
-        }
-
-        if (!isFileTypeAccepted(file, accept)) {
-          invalidFileNames.push(file.name);
-          continue;
-        }
-
-        validFiles.push(file);
-      }
-
-      setMessage(null);
-      clearSelection();
-
-      if (validFiles.length === 0) {
-        setError(
-          oversizedFileNames.length > 0
-            ? `File${oversizedFileNames.length === 1 ? '' : 's'} "${oversizedFileNames.join(', ')}" exceed${
-                oversizedFileNames.length === 1 ? 's' : ''
-              } ${maxSizeMB}MB limit.`
-            : invalidFileNames.length > 0
-              ? `File${invalidFileNames.length === 1 ? '' : 's'} "${invalidFileNames.join(', ')}" are not allowed.`
-              : 'No valid files selected.',
-        );
-        return;
-      }
-
-      const newSelectedFiles = validFiles.map((file, index) => ({
-        id: `${file.name}-${file.lastModified}-${index}`,
-        file,
-        previewUrl: file.type.startsWith('image/')
-          ? URL.createObjectURL(file)
-          : '',
-      }));
-
-      setError(
-        oversizedFileNames.length > 0
-          ? `Skipped oversized file${oversizedFileNames.length === 1 ? '' : 's'}: ${oversizedFileNames.join(', ')}.`
-          : invalidFileNames.length > 0
-            ? `Skipped invalid file${invalidFileNames.length === 1 ? '' : 's'}: ${invalidFileNames.join(', ')}.`
-            : null,
-      );
-      setSelectedFiles(newSelectedFiles);
-      onFilesSelected?.(validFiles);
-    },
-    [accept, clearSelection, maxSizeMB, onFilesSelected],
-  );
-
-  const handleUpload = useCallback(async () => {
-    if (!uploadUrl) {
-      setError('Upload URL is not configured.');
-      return;
-    }
-
-    if (selectedFiles.length === 0) {
-      setError('Please select a file before uploading.');
-      return;
-    }
-
+  const submitUpload = async () => {
     if (uploadInFlightRef.current) {
       return;
     }
-
     uploadInFlightRef.current = true;
-    setIsUploading(true);
-    setMessage(null);
-    setError(null);
-
     try {
-      const formData = new FormData();
-      const fieldName = multiple ? 'files' : 'file';
-
-      for (const selectedFile of selectedFiles) {
-        formData.append(fieldName, selectedFile.file, selectedFile.file.name);
-      }
-
-      const response = await fetch(uploadUrl, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed with status ${response.status}`);
-      }
-
-      setMessage('Upload successful!');
-      onUploadSuccess?.();
-    } catch (err) {
-      const uploadError = err instanceof Error ? err.message : 'Upload failed.';
-      setError(uploadError);
-      onUploadError?.(uploadError);
-      console.error('Upload error:', err);
+      await handleUpload();
     } finally {
       uploadInFlightRef.current = false;
-      setIsUploading(false);
     }
-  }, [multiple, onUploadError, onUploadSuccess, selectedFiles, uploadUrl]);
+  };
 
-  const handleRemoveFile = useCallback((id: string) => {
-    setSelectedFiles((files) => {
-      const fileToRemove = files.find((file) => file.id === id);
-      if (fileToRemove) {
-        revokePreview(fileToRemove);
-      }
-      return files.filter((file) => file.id !== id);
-    });
-  }, []);
+  const handleFilesChanged = (event: ChangeEvent<HTMLInputElement>) => {
+    const candidates = event.target.files ? Array.from(event.target.files) : [];
+    const { validFiles } = validateCandidates(candidates, maxSizeMB);
 
-  const handleRemove = useCallback(() => {
-    clearSelection();
-    setError(null);
-    setMessage(null);
-  }, [clearSelection]);
+    if (validFiles.length === 0) {
+      resetSelection();
+      onFilesSelected?.(validFiles);
+      return;
+    }
 
-  useEffect(() => {
-    return () => {
-      selectedFiles.forEach(revokePreview);
-    };
-  }, []);
-
-  const describedBy = [error ? errorId : null, message ? statusId : null]
-    .filter(Boolean)
-    .join(' ');
+    commitSelection(validFiles);
+    onFilesSelected?.(validFiles);
+  };
 
   return (
     <div>
-      <label htmlFor="file-upload-input">Select {multiple ? 'files' : 'a file'}</label>
+      <label htmlFor="file-upload-input">Choose file</label>
       <input
+        id="file-upload-input"
         ref={inputRef}
         type="file"
         accept={accept}
         multiple={multiple}
-        aria-describedby={describedBy || undefined}
-        aria-invalid={Boolean(error)}
-        onChange={handleFileChange}
+        aria-describedby="file-upload-status file-upload-error"
+        onChange={handleFilesChanged}
+        disabled={isUploading}
       />
-      {error && (
-        <p id="file-upload-error" role="alert" style={{ color: 'red' }}>
-          {error}
-        </p>
-      )}
-      {message && (
-        <p id={statusId} role="status">
-          {message}
-        </p>
-      )}
-      {selectedFiles.map((item) => (
-        <div key={item.id}>
-          {item.previewUrl && (
-            <img
-              src={previews[index]}
-              alt="preview"
-              style={{ width: 100, height: 100, objectFit: 'cover' }}
-            />
-          ) : null}
-          <span>{file.name}</span>
-        </div>
-      ))}
-      {selectedFiles.length > 0 && (
-        <>
-          <button type="button" onClick={handleRemove} disabled={isUploading || uploadingRef.current}>
-            {multiple ? 'Remove all' : 'Remove'}
-          <button type="button" onClick={handleRemove} disabled={isUploading}>
-            Remove all
-          </button>
-          {uploadUrl ? (
-            <button
-              type="button"
-              onClick={handleUpload}
-              disabled={isUploading || uploadingRef.current}
-              aria-busy={isUploading}
-            >
-              {isUploading ? 'Uploading...' : 'Upload'}
-            </button>
-          ) : null}
-        </>
-      )}
+      <button
+        type="button"
+        onClick={submitUpload}
+        disabled={isUploading || uploadingRef.current}
+      >
+        {isUploading ? 'Uploading…' : 'Upload'}
+      </button>
+      <div>
+        {previews.map((preview) => (
+          <img key={preview} src={preview} alt="Upload preview" />
+        ))}
+      </div>
+      <p id="file-upload-error" role="alert">
+        {error}
+      </p>
+      <p id="file-upload-status" role="status">
+        {message}
+      </p>
     </div>
   );
-};
+}

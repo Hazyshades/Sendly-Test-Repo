@@ -3,6 +3,7 @@ const { readFileSync } = require('node:fs');
 const test = require('node:test');
 
 const source = readFileSync('Login.tsx', 'utf8');
+const hookSource = readFileSync('lib/useFileUpload.ts', 'utf8');
 
 test('Login upload sends binary data as multipart FormData', () => {
   assert.match(source, /new\s+FormData\s*\(/);
