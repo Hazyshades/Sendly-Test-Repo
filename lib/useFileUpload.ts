@@ -74,6 +74,8 @@ export const useFileUpload = ({
   const isMountedRef = useRef(true);
   const previewsRef = useRef<string[]>([]);
 
+  // Revoke all existing preview object URLs, then set the new list.
+  // Defined before clearSelection so clearSelection can safely call it.
   const replacePreviews = useCallback((nextPreviews: string[]) => {
     previewsRef.current.forEach((url) => {
       if (url) {
@@ -84,9 +86,11 @@ export const useFileUpload = ({
     setPreviews(nextPreviews);
   }, []);
 
-  const resetSelection = useCallback(() => {
-    setSelectedFiles([]);
+  // Single clearSelection implementation — resets file list, revokes preview
+  // URLs, and clears the native input value so the same file can be re-selected.
+  const clearSelection = useCallback(() => {
     replacePreviews([]);
+    setSelectedFiles([]);
     if (inputRef.current) {
       inputRef.current.value = '';
     }
@@ -95,7 +99,7 @@ export const useFileUpload = ({
   const selectFiles = useCallback(
     (files: File[]) => {
       const validFiles: File[] = [];
-      const errors: string[] = [];
+      const invalidFileNames: string[] = [];
       const candidates = multiple ? files : files.slice(0, 1);
       const maxBytes =
         maxSizeMB !== undefined && Number.isFinite(maxSizeMB) && maxSizeMB > 0
@@ -103,17 +107,17 @@ export const useFileUpload = ({
           : null;
 
       if (!multiple && files.length > 1) {
-        errors.push('Only one file can be selected.');
+        invalidFileNames.push('(only one file can be selected at a time)');
       }
 
       for (const file of candidates) {
         if (maxBytes !== null && file.size > maxBytes) {
-          errors.push(`File "${file.name}" exceeds ${maxSizeMB}MB limit.`);
+          invalidFileNames.push(file.name);
           continue;
         }
 
         if (!isAcceptedFile(file, accept)) {
-          errors.push(`File "${file.name}" is not an accepted file type.`);
+          invalidFileNames.push(file.name);
           continue;
         }
 
@@ -123,8 +127,12 @@ export const useFileUpload = ({
       setMessage(null);
 
       if (validFiles.length === 0) {
-        setError(errors.length > 0 ? errors.join(' ') : 'No valid files selected.');
-        resetSelection();
+        setError(
+          invalidFileNames.length > 0
+            ? `File(s) not accepted: ${invalidFileNames.join(', ')}`
+            : 'No valid files selected.',
+        );
+        clearSelection();
         return;
       }
 
@@ -132,12 +140,16 @@ export const useFileUpload = ({
         file.type.startsWith('image/') ? URL.createObjectURL(file) : '',
       );
 
-      setError(errors.length > 0 ? errors.join(' ') : null);
+      setError(
+        invalidFileNames.length > 0
+          ? `Some files were skipped: ${invalidFileNames.join(', ')}`
+          : null,
+      );
       setSelectedFiles(validFiles);
       replacePreviews(nextPreviews);
       onFilesSelected?.(validFiles);
     },
-    [accept, maxSizeMB, multiple, onFilesSelected, replacePreviews, resetSelection],
+    [accept, maxSizeMB, multiple, onFilesSelected, replacePreviews, clearSelection],
   );
 
   const handleFileChange = useCallback(
@@ -191,7 +203,7 @@ export const useFileUpload = ({
       if (isMountedRef.current) {
         setMessage(successMessage);
         if (clearOnSuccess) {
-          resetSelection();
+          clearSelection();
         }
         onUploadSuccess?.();
       }
@@ -223,17 +235,17 @@ export const useFileUpload = ({
     multiple,
     onUploadError,
     onUploadSuccess,
-    resetSelection,
+    clearSelection,
     selectedFiles,
     successMessage,
     uploadUrl,
   ]);
 
   const handleRemove = useCallback(() => {
-    resetSelection();
+    clearSelection();
     setError(null);
     setMessage(null);
-  }, [resetSelection]);
+  }, [clearSelection]);
 
   useEffect(() => {
     isMountedRef.current = true;
