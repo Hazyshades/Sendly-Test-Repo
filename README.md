@@ -17,11 +17,50 @@ Webhook integration repo for GitHub agent bounty workflows (Sendly).
 
 ## Development
 
+### Prerequisites & Installation
+
+Node.js version is pinned to `20.19.5` in `.nvmrc`. Install dependencies via:
+
+```bash
+npm ci
+# or npm install
+```
+
+### Type Checking
+
+To run TypeScript type checks:
+
+```bash
+npm run typecheck
+```
+
+### Test Suites
+
+#### JavaScript / Node.js Suites (run in CI via `npm test`)
+
 ```bash
 npm test
 ```
 
-Runs component and upload tests. Node.js version is pinned to 20.19.5 in .nvmrc. (`upload_file.test.js`, `login_upload.test.js`, `components/file_upload.test.js`).
+Runs the native Node.js test runner (`node --test`) across all JavaScript test suites:
+- `upload_file.test.js`
+- `login_upload.test.js`
+- `file_upload_component.test.js`
+- `double_submit_race.test.js`
+- `components/file_upload.test.js`
+- `use_file_upload_errors.test.js`
+- `test_suite_wiring.test.js`
+
+#### Python CLI Suite
+To run the Python CLI test suite (`test_fix.py`):
+
+```bash
+python3 -m unittest test_fix.py
+```
+or:
+```bash
+python test_fix.py
+```
 
 ## Contributing
 
