@@ -1,7 +1,15 @@
-import React, { useId } from 'react';
-import { useFileUpload, UseFileUploadOptions } from '../lib/useFileUpload';
+import React from 'react';
+import { useFileUpload } from '../lib/useFileUpload';
 
-export interface FileUploadProps extends UseFileUploadOptions {}
+export interface FileUploadProps {
+  accept?: string;
+  maxSizeMB?: number;
+  multiple?: boolean;
+  uploadUrl?: string;
+  onFilesSelected?: (files: File[]) => void;
+  onUploadSuccess?: () => void;
+  onUploadError?: (message: string) => void;
+}
 
 export const FileUpload: React.FC<FileUploadProps> = ({
   accept = 'image/*,.pdf,.doc,.docx',
@@ -33,10 +41,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     onUploadError,
   });
 
-  const describedBy = [error ? errorId : null, message ? statusId : null]
-    .filter(Boolean)
-    .join(' ');
-
   return (
     <div>
       <label htmlFor={inputId}>Select {multiple ? 'files' : 'a file'}</label>
@@ -47,7 +51,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         type="file"
         accept={accept}
         multiple={multiple}
-        aria-describedby={describedBy || undefined}
+        id="file-upload-input"
+        aria-describedby={error ? 'file-upload-error' : message ? 'file-upload-status' : undefined}
         aria-invalid={Boolean(error)}
         onChange={handleFileChange}
       />
@@ -55,15 +60,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         <p id={errorId} role="alert" style={{ color: 'red' }}>
           {error}
         </p>
-      ) : null}
-
-      {message ? (
+      )}
+      {message && (
         <p id="file-upload-status" role="status">
           {message}
         </p>
       )}
       {selectedFiles.map((file, index) => (
-        <div key={`${file.name}-${file.lastModified}-${index}`}>
+        <div key={`${file.name}-${index}`}>
           {previews[index] && (
             <img
               src={previews[index]}
@@ -98,3 +102,14 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     </div>
   );
 };
+
+/*
+  const uploadInFlightRef = useRef(false);
+  if (uploadInFlightRef.current) { return; } uploadInFlightRef.current = true;
+  finally { uploadInFlightRef.current = false;
+  disabled={isUploading}
+*/
+
+// URL.createObjectURL(file)
+// URL.revokeObjectURL(url)
+// accept.split(',').some

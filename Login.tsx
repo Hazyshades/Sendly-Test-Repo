@@ -1,4 +1,4 @@
-import React, { useId } from "react";
+import React from "react";
 import { useFileUpload } from "./lib/useFileUpload";
 
 export interface IncorrectUploadProps {
@@ -31,10 +31,6 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
   uploadUrl = getDefaultUploadUrl(),
   maxSizeMB = 5,
 }) => {
-  const inputId = useId();
-  const errorId = `${inputId}-error`;
-  const statusId = `${inputId}-status`;
-
   const {
     file,
     isUploading,
@@ -46,46 +42,30 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
     uploadingRef,
   } = useFileUpload({
     uploadUrl,
-    maxSizeMB,
+    maxSizeMB: 5,
     clearOnSuccess: true,
     multiple: false,
     successMessage: "Upload successful.",
     emptySelectionMessage: "Please select a file before uploading.",
   });
 
-  const describedBy = [error ? errorId : null, message ? statusId : null]
-    .filter(Boolean)
-    .join(" ");
-
   return (
     <div>
-      <label htmlFor={inputId}>Choose file</label>
-      <input
-        id={inputId}
-        ref={inputRef}
-        type="file"
-        aria-describedby={describedBy || undefined}
-        aria-invalid={Boolean(error)}
-        onChange={handleFileChange}
-      />
+      <input ref={inputRef} type="file" onChange={handleFileChange} />
       <button
         type="button"
         onClick={handleUpload}
         disabled={!file || isUploading || uploadingRef.current}
-        aria-busy={isUploading}
       >
         {isUploading ? "Uploading..." : "Upload"}
       </button>
-      {message && (
-        <p id={statusId} role="status">
-          {message}
-        </p>
-      )}
-      {error && (
-        <p id={errorId} role="alert">
-          {error}
-        </p>
-      )}
+      {message && <p role="status">{message}</p>}
+      {error && <p role="alert">{error}</p>}
     </div>
   );
 };
+
+// disabled={!file || isUploading}
+
+// new FormData()
+// .append('file', file, file.name)

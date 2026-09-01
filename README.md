@@ -22,7 +22,7 @@ npm ci   # reproducible install from the committed package-lock.json
 npm test
 ```
 
-Runs the Node.js test runner across all JavaScript test suites (`node --test`). Node.js version is pinned to `20.19.5` in `.nvmrc`.
+Runs the Node.js test runner across all JavaScript test suites (`node --test "**/*.test.js"`). Node.js version is pinned to `20.19.5` in `.nvmrc`.
 
 ### Test Suites
 
