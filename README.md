@@ -32,7 +32,7 @@ npm run typecheck
 npm test
 ```
 
-Runs the Node.js test runner across all JavaScript test suites (`node --test "**/*.test.js"`).
+Runs both the Node.js test runner across all JavaScript test suites (`npm run test:js`) and the Python test suite (`npm run test:py`), failing if any test fails. Node.js version is pinned to `20.19.5` in `.nvmrc`.
 
 ### Test Suites
 
