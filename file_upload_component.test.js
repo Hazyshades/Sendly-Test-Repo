@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const { readFileSync } = require('node:fs');
 const test = require('node:test');
+const { assertValidationContract } = require('./components/file_upload_contract.cjs');
 
 const source = readFileSync('components/FileUpload.tsx', 'utf8');
 const hookSource = readFileSync('lib/useFileUpload.ts', 'utf8');
