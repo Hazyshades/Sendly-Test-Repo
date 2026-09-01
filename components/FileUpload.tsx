@@ -1,28 +1,9 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React from 'react';
+import { useFileUpload } from '../lib/useFileUpload';
 
-const DEFAULT_MAX_SIZE_MB = 10;
 const inputId = 'file-upload-input';
 const errorId = 'file-upload-error';
 const statusId = 'file-upload-status';
-
-const isFileTypeAccepted = (file: File, accept: string) => {
-  const acceptedTypes = accept
-    .split(',')
-    .map((type) => type.trim().toLowerCase())
-    .filter(Boolean);
-
-  return acceptedTypes.some((acceptedType) => {
-    if (acceptedType.endsWith('/*')) {
-      return file.type.toLowerCase().startsWith(acceptedType.slice(0, -1));
-    }
-
-    if (acceptedType.startsWith('.')) {
-      return file.name.toLowerCase().endsWith(acceptedType);
-    }
-
-    return file.type.toLowerCase() === acceptedType;
-  });
-};
 
 export interface FileUploadProps {
   accept?: string;
@@ -34,44 +15,6 @@ export interface FileUploadProps {
   onUploadError?: (message: string) => void;
 }
 
-const DEFAULT_MAX_SIZE_MB = 10;
-export interface SelectedFile {
-  id: string;
-  file: File;
-  previewUrl: string;
-}
-
-const DEFAULT_MAX_SIZE_MB = 10;
-
-const isFileTypeAccepted = (file: File, accept?: string): boolean => {
-  if (!accept || accept.trim() === '') {
-    return true;
-  }
-
-  const fileName = file.name.toLowerCase();
-  const fileType = file.type.toLowerCase();
-
-  return accept.split(',').some((rawToken) => {
-    const token = rawToken.trim().toLowerCase();
-
-    if (token.startsWith('.')) {
-      return fileName.endsWith(token);
-    }
-
-    if (token.endsWith('/*')) {
-      return fileType.startsWith(token.slice(0, -1));
-    }
-
-    return fileType === token;
-  });
-};
-
-const revokePreview = (selectedFile: SelectedFile) => {
-  if (selectedFile.previewUrl) {
-    URL.revokeObjectURL(selectedFile.previewUrl);
-  }
-};
-
 export const FileUpload: React.FC<FileUploadProps> = ({
   accept = 'image/*,.pdf,.doc,.docx',
   maxSizeMB = 5,
@@ -81,10 +24,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   onUploadSuccess,
   onUploadError,
 }) => {
-  const inputId = useId();
-  const errorId = `${inputId}-error`;
-  const statusId = `${inputId}-status`;
-
   const {
     selectedFiles,
     previews,
@@ -105,192 +44,6 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     onUploadSuccess,
     onUploadError,
   });
-  const [selectedFiles, setSelectedFiles] = useState<SelectedFile[]>([]);
-  const [error, setError] = useState<string | null>(null);
-  const [isUploading, setIsUploading] = useState(false);
-  const [message, setMessage] = useState<string | null>(null);
-  const inputRef = useRef<HTMLInputElement>(null);
-  const uploadInFlightRef = useRef(false);
-  const selectedFilesRef = useRef<SelectedFile[]>([]);
-
-  useEffect(() => {
-    selectedFilesRef.current = selectedFiles;
-  }, [selectedFiles]);
-
-  useEffect(() => {
-    return () => {
-      selectedFilesRef.current.forEach(revokePreview);
-    };
-  }, []);
-
-  const clearSelection = useCallback(() => {
-    setSelectedFiles((prev) => {
-      prev.forEach(revokePreview);
-      return [];
-    });
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
-    onFilesSelected?.([]);
-  }, [onFilesSelected]);
-
-  const handleRemoveFile = useCallback(
-    (id: string) => {
-      setSelectedFiles((prev) => {
-        const toRemove = prev.find((item) => item.id === id);
-        if (toRemove) {
-          revokePreview(toRemove);
-        }
-        const updated = prev.filter((item) => item.id !== id);
-        onFilesSelected?.(updated.map((item) => item.file));
-        return updated;
-      });
-    },
-    [onFilesSelected],
-  );
-
-  const clearSelection = useCallback(() => {
-    setSelectedFiles((files) => {
-      files.forEach(revokePreview);
-      return [];
-    });
-
-    if (inputRef.current) {
-      inputRef.current.value = '';
-    }
-  }, []);
-
-  const handleFileChange = useCallback(
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files || []);
-      const maxBytes = maxSizeMB * 1024 * 1024;
-      const validFiles: File[] = [];
-      const oversizedFileNames: string[] = [];
-      const invalidFileNames: string[] = [];
-      const invalidTypeNames: string[] = [];
-
-      for (const file of files) {
-        if (file.size > maxBytes) {
-          oversizedFileNames.push(file.name);
-          continue;
-        }
-
-        if (!isFileTypeAccepted(file, accept)) {
-          invalidFileNames.push(file.name);
-          continue;
-        }
-
-        validFiles.push(file);
-      }
-
-      setMessage(null);
-      clearSelection();
-
-      if (validFiles.length === 0) {
-        setError(
-          oversizedFileNames.length > 0
-            ? `File${oversizedFileNames.length === 1 ? '' : 's'} "${oversizedFileNames.join(', ')}" exceed${
-                oversizedFileNames.length === 1 ? 's' : ''
-              } ${maxSizeMB}MB limit.`
-            : invalidFileNames.length > 0
-              ? `File${invalidFileNames.length === 1 ? '' : 's'} "${invalidFileNames.join(', ')}" are not allowed.`
-              : 'No valid files selected.',
-        );
-        return;
-      }
-
-      const newSelectedFiles = validFiles.map((file, index) => ({
-        id: `${file.name}-${file.lastModified}-${index}`,
-        file,
-        previewUrl: file.type.startsWith('image/')
-          ? URL.createObjectURL(file)
-          : '',
-      }));
-
-      setError(
-        oversizedFileNames.length > 0
-          ? `Skipped oversized file${oversizedFileNames.length === 1 ? '' : 's'}: ${oversizedFileNames.join(', ')}.`
-          : invalidFileNames.length > 0
-            ? `Skipped invalid file${invalidFileNames.length === 1 ? '' : 's'}: ${invalidFileNames.join(', ')}.`
-            : null,
-      );
-      setSelectedFiles(newSelectedFiles);
-      onFilesSelected?.(validFiles);
-    },
-    [accept, clearSelection, maxSizeMB, onFilesSelected],
-  );
-
-  const handleUpload = useCallback(async () => {
-    if (!uploadUrl) {
-      setError('Upload URL is not configured.');
-      return;
-    }
-
-    if (selectedFiles.length === 0) {
-      setError('Please select a file before uploading.');
-      return;
-    }
-
-    if (uploadInFlightRef.current) {
-      return;
-    }
-
-    uploadInFlightRef.current = true;
-    setIsUploading(true);
-    setMessage(null);
-    setError(null);
-
-    try {
-      const formData = new FormData();
-      const fieldName = multiple ? 'files' : 'file';
-
-      for (const selectedFile of selectedFiles) {
-        formData.append(fieldName, selectedFile.file, selectedFile.file.name);
-      }
-
-      const response = await fetch(uploadUrl, {
-        method: 'POST',
-        body: formData,
-      });
-
-      if (!response.ok) {
-        throw new Error(`Upload failed with status ${response.status}`);
-      }
-
-      setMessage('Upload successful!');
-      onUploadSuccess?.();
-    } catch (err) {
-      const uploadError = err instanceof Error ? err.message : 'Upload failed.';
-      setError(uploadError);
-      onUploadError?.(uploadError);
-      console.error('Upload error:', err);
-    } finally {
-      uploadInFlightRef.current = false;
-      setIsUploading(false);
-    }
-  }, [multiple, onUploadError, onUploadSuccess, selectedFiles, uploadUrl]);
-
-  const handleRemoveFile = useCallback((id: string) => {
-    setSelectedFiles((files) => {
-      const fileToRemove = files.find((file) => file.id === id);
-      if (fileToRemove) {
-        revokePreview(fileToRemove);
-      }
-      return files.filter((file) => file.id !== id);
-    });
-  }, []);
-
-  const handleRemove = useCallback(() => {
-    clearSelection();
-    setError(null);
-    setMessage(null);
-  }, [clearSelection]);
-
-  useEffect(() => {
-    return () => {
-      selectedFiles.forEach(revokePreview);
-    };
-  }, []);
 
   const describedBy = [error ? errorId : null, message ? statusId : null]
     .filter(Boolean)
@@ -300,6 +53,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
     <div>
       <label htmlFor="file-upload-input">Select {multiple ? 'files' : 'a file'}</label>
       <input
+        id={inputId}
         ref={inputRef}
         type="file"
         accept={accept}
@@ -308,34 +62,40 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         aria-invalid={Boolean(error)}
         onChange={handleFileChange}
       />
-      {error && (
+
+      {error ? (
         <p id="file-upload-error" role="alert" style={{ color: 'red' }}>
           {error}
         </p>
-      )}
-      {message && (
-        <p id={statusId} role="status">
+      ) : null}
+
+      {message ? (
+        <p id="file-upload-status" role="status">
           {message}
         </p>
-      )}
-      {selectedFiles.map((item) => (
-        <div key={item.id}>
-          {item.previewUrl && (
+      ) : null}
+
+      {selectedFiles.map((file, index) => (
+        <div key={`${file.name}-${file.lastModified}-${index}`}>
+          {previews[index] ? (
             <img
               src={previews[index]}
-              alt="preview"
+              alt={`Preview of ${file.name}`}
               style={{ width: 100, height: 100, objectFit: 'cover' }}
             />
           ) : null}
           <span>{file.name}</span>
         </div>
       ))}
-      {selectedFiles.length > 0 && (
-        <>
-          <button type="button" onClick={handleRemove} disabled={isUploading || uploadingRef.current}>
+
+      {selectedFiles.length > 0 ? (
+        <div>
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={isUploading || uploadingRef.current}
+          >
             {multiple ? 'Remove all' : 'Remove'}
-          <button type="button" onClick={handleRemove} disabled={isUploading}>
-            Remove all
           </button>
           {uploadUrl ? (
             <button
@@ -347,8 +107,8 @@ export const FileUpload: React.FC<FileUploadProps> = ({
               {isUploading ? 'Uploading...' : 'Upload'}
             </button>
           ) : null}
-        </>
-      )}
+        </div>
+      ) : null}
     </div>
   );
 };
