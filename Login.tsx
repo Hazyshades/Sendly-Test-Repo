@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useId } from "react";
 import { useFileUpload } from "./lib/useFileUpload";
 
 export interface IncorrectUploadProps {
@@ -26,18 +26,15 @@ const getDefaultUploadUrl = (): string => {
  *
  * Upload I/O is delegated to `useFileUpload`, which owns AbortController
  * cancellation and isMountedRef guards so unmount mid-upload never calls setState.
- *
- * Accessibility:
- *  - `<label htmlFor="login-file-input">` is explicitly associated with the
- *    file input via a matching `id`.
- *  - An `aria-label` is also present as a fallback.
- *  - Status and error regions are referenced via `aria-describedby` so
- *    assistive technologies announce them after the input is described.
  */
 export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
   uploadUrl = getDefaultUploadUrl(),
   maxSizeMB = 5,
 }) => {
+  const inputId = useId();
+  const errorId = `${inputId}-error`;
+  const statusId = `${inputId}-status`;
+
   const {
     file,
     isUploading,
@@ -56,22 +53,19 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
     emptySelectionMessage: "Please select a file before uploading.",
   });
 
-  const describedBy = [
-    error ? "login-file-error" : null,
-    message ? "login-file-status" : null,
-  ]
+  const describedBy = [error ? errorId : null, message ? statusId : null]
     .filter(Boolean)
     .join(" ");
 
   return (
     <div>
-      <label htmlFor="login-file-input">Choose file</label>
+      <label htmlFor={inputId}>Choose file</label>
       <input
-        id="login-file-input"
+        id={inputId}
         ref={inputRef}
         type="file"
-        aria-label="Choose file"
         aria-describedby={describedBy || undefined}
+        aria-invalid={Boolean(error)}
         onChange={handleFileChange}
       />
       <button
@@ -83,12 +77,12 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
         {isUploading ? "Uploading..." : "Upload"}
       </button>
       {message && (
-        <p id="login-file-status" role="status">
+        <p id={statusId} role="status">
           {message}
         </p>
       )}
       {error && (
-        <p id="login-file-error" role="alert">
+        <p id={errorId} role="alert">
           {error}
         </p>
       )}
