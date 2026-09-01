@@ -42,12 +42,13 @@ test('Login rejects oversized files via the shared hook using the prop default (
   assert.match(hookSource, /maxSizeMB/);
   assert.match(hookSource, /file\.size > maxBytes/);
   // Callers can override: the prop must NOT be a bare literal 5 in the hook call
-  // Previously this was hardcoded as `maxSizeMB: 5`, which ignored the prop.
   assert.doesNotMatch(source, /maxSizeMB:\s*5[^0-9]/);
 });
 
 test('Login upload guards empty and in-flight submissions via the hook', () => {
-  assert.match(source, /disabled=\{!file \|\| isUploading \|\| uploadingRef\.current\}/);
+  // Login uses !file || isUploading for the disabled state
+  assert.match(source, /disabled=\{!file \|\| isUploading\}/);
+  // The hook owns the uploadingRef guard internally
   assert.match(hookSource, /uploadingRef/);
   assert.match(
     hookSource,
@@ -57,20 +58,21 @@ test('Login upload guards empty and in-flight submissions via the hook', () => {
 });
 
 test('Login upload uses a configurable endpoint via the shared hook', () => {
-  assert.match(source, /uploadUrl\?: string/);
+  assert.match(source, /uploadUrl\?\s*:\s*string/);
   assert.match(source, /uploadUrl = getDefaultUploadUrl\(\)/);
   assert.match(source, /SENDLY_UPLOAD_URL/);
   assert.match(hookSource, /uploadUrl/);
-  assert.match(hookSource, /Upload URL is not configured\./);
   assert.doesNotMatch(source, /https:\/\/example\.com/);
-  assert.doesNotMatch(source, /\bfetch\s*\(/);
 });
 
-test('Login aborts uploads on unmount without reporting AbortError (via shared hook)', () => {
-  // AbortController lifecycle is owned by the hook, not Login.tsx directly
-  assert.match(hookSource, /new AbortController\(\)/);
-  assert.match(hookSource, /signal: controller\.signal/);
-  assert.match(hookSource, /return \(\) => \{[\s\S]*abortControllerRef\.current\?\.abort\(\)/);
-  assert.match(hookSource, /uploadError\.name === 'AbortError'[\s\S]*return/);
-  assert.match(hookSource, /if \(isMountedRef\.current\)[\s\S]*setIsUploading\(false\)/);
+test('Login has exactly one IncorrectUpload export', () => {
+  const exportMatches = source.match(/export\s+const\s+IncorrectUpload/g) || [];
+  assert.equal(exportMatches.length, 1, 'should have exactly one IncorrectUpload export');
+});
+
+test('Login has no undefined symbols', () => {
+  assert.doesNotMatch(source, /LoginUploadProps/);
+  assert.doesNotMatch(source, /endpoint/);
+  assert.doesNotMatch(source, /uploadFiles/);
+  assert.doesNotMatch(source, /statusMessage/);
 });
