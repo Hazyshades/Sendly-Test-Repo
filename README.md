@@ -60,3 +60,10 @@ python3 -m unittest test_fix -v
 2. Fork the repository and open a PR that references the issue (`Fixes #NN`).
 3. After the PR is reviewed and merged, comment your ARC Testnet EVM address on
    the issue. The bounty is paid in test USDC on ARC Testnet.
+
+### Running Tests
+To run the JavaScript test suite:
+`npm test`
+
+To run the Python test suite:
+`python3 -m unittest test_fix -v`
