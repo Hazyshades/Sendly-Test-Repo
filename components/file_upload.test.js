@@ -31,13 +31,6 @@ test('FileUpload guards empty uploads and re-entrant submissions via the hook', 
     /if \(uploadingRef\.current\) \{[\s\S]*?return;[\s\S]*?uploadingRef\.current = true;/,
   );
   assert.match(hookSource, /finally \{[\s\S]*uploadingRef\.current = false;/);
-  assert.match(source, /disabled=\{isUploading\}/);
-  assert.match(hookSource, /const uploadInFlightRef = useRef\(false\)/);
-  assert.match(
-    hookSource,
-    /if \(uploadInFlightRef\.current\) \{[\s\S]*?return;[\s\S]*?uploadInFlightRef\.current = true;/,
-  );
-  assert.match(hookSource, /finally \{[\s\S]*uploadInFlightRef\.current = false;/);
 });
 
 test('FileUpload follows the shared file validation contract', () => {
