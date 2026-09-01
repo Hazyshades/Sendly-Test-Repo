@@ -1,3 +1,3 @@
-# Documentation & Reference for Issue #267
+# Documentation & Reference for Issue #279
 
-Resolved autonomous update for '[Docs] README test list omits use_file_upload_errors and test_suite_wiring suites'.
+Resolved autonomous update for '[Bug] README claims Node 20.19.5 pin but does not mention typecheck or install step'.
