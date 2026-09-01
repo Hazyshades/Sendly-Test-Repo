@@ -33,3 +33,6 @@ jobs:
 
       - name: Run test suites (npm test = test:js && test:py)
         run: npm test
+
+      - name: Run Python tests
+        run: python3 -m unittest test_fix -v
