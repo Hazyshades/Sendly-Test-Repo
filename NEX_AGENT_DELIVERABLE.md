@@ -1,7 +1,7 @@
-# Deliverable for issue #276
+# Deliverable for issue #274
 
 GitHub issue with bounty label — auto-submit via PR (fork + branch + PR to upstream)
 
 ## Code
 
-See `github-276.js`.
+See `github-274.js`.
