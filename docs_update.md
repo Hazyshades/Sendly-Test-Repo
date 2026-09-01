@@ -1,3 +1,3 @@
-# Documentation & Reference for Issue #279
+# Documentation & Reference for Issue #278
 
-Resolved autonomous update for '[Bug] README claims Node 20.19.5 pin but does not mention typecheck or install step'.
+Resolved autonomous update for '[Bug] npm test exit status misleading locally when suites fail under Windows path layout'.
