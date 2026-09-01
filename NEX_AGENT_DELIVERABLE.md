@@ -1,7 +1,7 @@
-# Deliverable for issue #251
+# Deliverable for issue #257
 
-GitHub issue with bounty label — auto-submit via PR (fork + branch + PR to upstream)
+GH mega-sweep — created 2026-08-31, 0 comments, labels: bug, bounty, bounty:1, arc-testnet, reward-usdc
 
 ## Code
 
-See `github-251.ts`.
+See `github-257-Hazyshades-Sendly-Test-Repo.txt`.
