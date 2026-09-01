@@ -1,5 +1,10 @@
-import { useState, useCallback, useRef, useEffect } from 'react';
-import { mapUploadError } from './mapUploadError.cjs';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import {
+  UploadHttpError,
+  getFriendlyUploadErrorMessage,
+} from './mapUploadError';
+
+export { UploadHttpError, getFriendlyUploadErrorMessage };
 
 export interface UseFileUploadOptions {
   /** URL to upload files to */
