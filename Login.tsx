@@ -1,16 +1,16 @@
-import { useFileUpload } from './lib/useFileUpload';
-import type { UseFileUploadOptions } from './lib/useFileUpload';
+import React from "react";
+import { useFileUpload } from "./lib/useFileUpload";
+
+/**
+ * Default maximum upload size in megabytes.
+ * Callers may override this via the `maxSizeMB` prop.
+ */
+const DEFAULT_MAX_SIZE_MB = 5;
 
 export interface IncorrectUploadProps {
   uploadUrl?: string;
-  /**
-   * Optional size override in MB. The login upload contract defaults to
-   * `maxSizeMB: 5` unless a caller supplies this prop (see #271).
-   */
+  /** Maximum allowed file size in megabytes. Defaults to {@link DEFAULT_MAX_SIZE_MB} (5 MB). */
   maxSizeMB?: number;
-  onFilesSelected?: (files: File[]) => void;
-  onUploadSuccess?: () => void;
-  onUploadError?: (message: string) => void;
 }
 
 type SendlyRuntime = typeof globalThis & {
@@ -24,90 +24,48 @@ const getDefaultUploadUrl = (): string => {
     runtime.__SENDLY_CONFIG__?.uploadUrl ??
     runtime.process?.env?.SENDLY_UPLOAD_URL ??
     runtime.process?.env?.REACT_APP_UPLOAD_URL ??
-    ''
+    ""
   );
 };
 
 /**
- * Single-file login upload payload. The shared hook sends this exact
- * multipart shape: one binary field `file` carrying the file and its name.
+ * Login screen upload UI.
+ *
+ * Upload I/O is delegated to `useFileUpload`, which owns AbortController
+ * cancellation and isMountedRef guards so unmount mid-upload never calls setState.
+ *
+ * @param uploadUrl  POST endpoint. Falls back to runtime env vars when omitted.
+ * @param maxSizeMB  Maximum file size in MB. Defaults to 5 MB.
  */
-export function buildLoginFormData(file: File): FormData {
-  const formData = new FormData();
-  formData.append('file', file, file.name);
-  return formData;
-}
-
-/**
- * Login upload form: one cohesive implementation delegating selection,
- * validation, upload, guards, and error state to the shared hook (#250).
- */
-export function IncorrectUpload({
+export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
   uploadUrl = getDefaultUploadUrl(),
-  maxSizeMB,
-  onFilesSelected,
-  onUploadSuccess,
-  onUploadError,
-}: IncorrectUploadProps) {
-  const uploadOptions: UseFileUploadOptions = {
-    uploadUrl,
-    maxSizeMB: 5,
-    multiple: false,
-    clearOnSuccess: true,
-    successMessage: 'Upload successful.',
-    emptySelectionMessage: 'Please select a file before uploading.',
-    onFilesSelected,
-    onUploadSuccess,
-    onUploadError,
-  };
-  if (maxSizeMB !== undefined) {
-    uploadOptions.maxSizeMB = maxSizeMB;
-  }
-
+  maxSizeMB = DEFAULT_MAX_SIZE_MB,
+}) => {
   const {
     file,
     isUploading,
     message,
     error,
     inputRef,
-    uploadingRef,
     handleFileChange,
     handleUpload,
-  } = useFileUpload(uploadOptions);
-
-  const handleSubmit = () => {
-    if (!file || isUploading || uploadingRef.current) {
-      return;
-    }
-    // Verify the single-file multipart contract before handing off to the hook.
-    buildLoginFormData(file);
-    void handleUpload();
-  };
+  } = useFileUpload({
+    uploadUrl,
+    maxSizeMB,
+    clearOnSuccess: true,
+    multiple: false,
+    successMessage: "Upload successful.",
+    emptySelectionMessage: "Please select a file before uploading.",
+  });
 
   return (
     <div>
-      <label htmlFor="login-file-input">Upload file</label>
-      <input
-        id="login-file-input"
-        ref={inputRef}
-        type="file"
-        onChange={handleFileChange}
-        disabled={!file || isUploading}
-        aria-describedby="login-upload-status"
-      />
-      <button
-        type="button"
-        onClick={handleSubmit}
-        disabled={!file || isUploading || uploadingRef.current}
-      >
-        {isUploading ? 'Uploading…' : 'Upload'}
+      <input ref={inputRef} type="file" onChange={handleFileChange} />
+      <button type="button" onClick={handleUpload} disabled={!file || isUploading}>
+        {isUploading ? "Uploading..." : "Upload"}
       </button>
-      <p id="login-upload-status" role="status">
-        {message}
-      </p>
-      <p id="login-upload-error" role="alert">
-        {error}
-      </p>
+      {message && <p role="status">{message}</p>}
+      {error && <p role="alert">{error}</p>}
     </div>
   );
-}
+};
