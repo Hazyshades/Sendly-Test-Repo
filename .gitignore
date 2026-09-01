@@ -6,3 +6,5 @@ AGENTCLAW_*
 
 # Scanner runs and ephemeral artifacts
 strix_runs/
+__pycache__/
+*.pyc

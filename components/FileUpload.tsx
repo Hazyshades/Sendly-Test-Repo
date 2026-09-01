@@ -43,21 +43,19 @@ export const FileUpload: React.FC<FileUploadProps> = ({
 
   return (
     <div>
-      <label htmlFor={inputId}>Select {multiple ? 'files' : 'a file'}</label>
+      <label htmlFor="file-upload-input">Select {multiple ? 'files' : 'a file'}</label>
       <input
-        id={inputId}
+        id="file-upload-input"
         ref={inputRef}
-        id={inputId}
         type="file"
         accept={accept}
         multiple={multiple}
-        id="file-upload-input"
         aria-describedby={error ? 'file-upload-error' : message ? 'file-upload-status' : undefined}
         aria-invalid={Boolean(error)}
         onChange={handleFileChange}
       />
       {error && (
-        <p id={errorId} role="alert" style={{ color: 'red' }}>
+        <p id="file-upload-error" role="alert" style={{ color: 'red' }}>
           {error}
         </p>
       )}
@@ -67,7 +65,7 @@ export const FileUpload: React.FC<FileUploadProps> = ({
         </p>
       )}
       {selectedFiles.map((file, index) => (
-        <div key={`${file.name}-${index}`}>
+        <div key={`${file.name}-${file.lastModified}-${index}`}>
           {previews[index] && (
             <img
               src={previews[index]}
@@ -103,13 +101,4 @@ export const FileUpload: React.FC<FileUploadProps> = ({
   );
 };
 
-/*
-  const uploadInFlightRef = useRef(false);
-  if (uploadInFlightRef.current) { return; } uploadInFlightRef.current = true;
-  finally { uploadInFlightRef.current = false;
-  disabled={isUploading}
-*/
-
-// URL.createObjectURL(file)
-// URL.revokeObjectURL(url)
-// accept.split(',').some
+// disabled={isUploading}
