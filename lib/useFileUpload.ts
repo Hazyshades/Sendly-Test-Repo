@@ -79,7 +79,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
 
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadingRef = useRef(false);
-  const previewsRef = useRef<string[]>([]);
+  const uploadInFlightRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
   const isMountedRef = useRef(true);
   const previewsRef = useRef<string[]>([]);
@@ -195,10 +195,11 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     if (uploadingRef.current) {
       return;
     }
+    if (uploadInFlightRef.current) {
+      return;
+    }
     uploadingRef.current = true;
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
+    uploadInFlightRef.current = true;
     setIsUploading(true);
     setMessage(null);
     setError(null);
@@ -238,6 +239,15 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       }
 
       const uploadErrorMessage = getFriendlyUploadErrorMessage(uploadError);
+      setError(uploadErrorMessage);
+      onUploadError?.(uploadErrorMessage);
+      console.error('Upload error:', uploadError);
+    } finally {
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
+      }
+      uploadingRef.current = false;
+      uploadInFlightRef.current = false;
       if (isMountedRef.current) {
         setError(uploadErrorMessage);
         onUploadError?.(uploadErrorMessage);

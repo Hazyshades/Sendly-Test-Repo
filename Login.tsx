@@ -64,8 +64,3 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
     </div>
   );
 };
-
-// disabled={!file || isUploading}
-
-// new FormData()
-// .append('file', file, file.name)
