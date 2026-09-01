@@ -2,7 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import {
   UploadHttpError,
   getFriendlyUploadErrorMessage,
-} from './mapUploadError.cjs';
+} from './mapUploadError';
 
 export { UploadHttpError, getFriendlyUploadErrorMessage };
 
