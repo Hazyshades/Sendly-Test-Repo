@@ -17,20 +17,22 @@ Webhook integration repo for GitHub agent bounty workflows (Sendly).
 
 ## Development
 
-Node.js version is pinned to `20.19.5` in `.nvmrc` (single source of truth for
-local and CI tooling).
+Node.js version is pinned to `20.19.5` (defined in `.nvmrc`).
+
+To set up the repository and run all checks locally, use the following commands:
 
 ```bash
-npm ci                              # reproducible install from the committed package-lock.json
-npm test                            # full pipeline: npm run test:js && npm run test:py
-npm run test:js                     # JavaScript suites only (node --test)
-npm run test:py                     # Python CLI suite (python3 -m unittest test_fix -v)
-npm run typecheck                   # TypeScript (tsc --noEmit)
+# Install dependencies
+npm ci
+
+# Run TypeScript type checking
+npm run typecheck
+
+# Run all test suites (JavaScript and Python)
+npm test
 ```
 
-`npm test` runs the JS and Python suites in sequence and fails (non-zero exit)
-when either one fails. CI runs the same pipeline plus `npm run typecheck`
-(see `.github/workflows/ci.yml`).
+Runs the Node.js test runner across all JavaScript test suites (`node --test "**/*.test.js"`).
 
 ### Test Suites
 
