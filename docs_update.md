@@ -1,3 +1,3 @@
-# Documentation & Reference for Issue #261
+# Documentation & Reference for Issue #260
 
-Resolved autonomous update for '[Bug] Orphan workflow bounty-175.yml references missing npm run test:js and Node 22'.
+Resolved autonomous update for '[Bug] .nvmrc pins 20.19.5 while CI still uses node-version: 20'.
