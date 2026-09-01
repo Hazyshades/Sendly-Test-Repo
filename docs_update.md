@@ -1,3 +1,3 @@
-# Documentation & Reference for Issue #271
+# Documentation & Reference for Issue #266
 
-Resolved autonomous update for '[Bug] Login ignores maxSizeMB prop and hardcodes maxSizeMB: 5 into the hook'.
+Resolved autonomous update for '[Bug] CI never runs npm run typecheck even though the script exists'.
