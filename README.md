@@ -17,9 +17,26 @@ Webhook integration repo for GitHub agent bounty workflows (Sendly).
 
 ## Development
 
-Node.js version is pinned to `20.19.5` (defined in `.nvmrc`).
+### Prerequisites & Installation
 
-To set up the repository and run all checks locally, use the following commands:
+Node.js version is pinned to `20.19.5` in `.nvmrc`. Install dependencies via:
+
+```bash
+npm ci
+# or npm install
+```
+
+### Type Checking
+
+To run TypeScript type checks:
+
+```bash
+npm run typecheck
+```
+
+### Test Suites
+
+#### JavaScript / Node.js Suites (run in CI via `npm test`)
 
 ```bash
 # Install dependencies
@@ -32,26 +49,24 @@ npm run typecheck
 npm test
 ```
 
-Runs both the Node.js test runner across all JavaScript test suites (`npm run test:js`) and the Python test suite (`npm run test:py`), failing if any test fails. Node.js version is pinned to `20.19.5` in `.nvmrc`.
-
-### Test Suites
-
-#### JavaScript / Node.js Suites (run via `npm run test:js`)
+Runs the native Node.js test runner (`node --test`) across all JavaScript test suites:
 - `upload_file.test.js`
 - `login_upload.test.js`
 - `file_upload_component.test.js`
 - `double_submit_race.test.js`
+- `components/file_upload.test.js`
 - `use_file_upload_errors.test.js`
 - `test_suite_wiring.test.js`
-- `components/file_upload.test.js`
 
 #### Python CLI Suite
-Runs through the shared script:
+To run the Python CLI test suite (`test_fix.py`):
 
 ```bash
-npm run test:py
-# or directly
-python3 -m unittest test_fix -v
+python3 -m unittest test_fix.py
+```
+or:
+```bash
+python test_fix.py
 ```
 
 ## Contributing
