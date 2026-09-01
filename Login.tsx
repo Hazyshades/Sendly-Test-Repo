@@ -44,14 +44,14 @@ export function buildLoginFormData(file: File): FormData {
  */
 export function IncorrectUpload({
   uploadUrl = getDefaultUploadUrl(),
-  maxSizeMB,
+  maxSizeMB = 5,
   onFilesSelected,
   onUploadSuccess,
   onUploadError,
 }: IncorrectUploadProps) {
   const uploadOptions: UseFileUploadOptions = {
     uploadUrl,
-    maxSizeMB: 5,
+    maxSizeMB,
     multiple: false,
     clearOnSuccess: true,
     successMessage: 'Upload successful.',
@@ -60,9 +60,6 @@ export function IncorrectUpload({
     onUploadSuccess,
     onUploadError,
   };
-  if (maxSizeMB !== undefined) {
-    uploadOptions.maxSizeMB = maxSizeMB;
-  }
 
   const {
     file,
@@ -92,7 +89,7 @@ export function IncorrectUpload({
         ref={inputRef}
         type="file"
         onChange={handleFileChange}
-        disabled={!file || isUploading}
+        disabled={isUploading}
         aria-describedby="login-upload-status"
       />
       <button

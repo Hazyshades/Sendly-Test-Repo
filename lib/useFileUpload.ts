@@ -68,11 +68,11 @@ function isAcceptedFile(file: File, accept?: string): boolean {
  */
 function makePreviews(files: File[]): string[] {
   const urls: string[] = [];
-  for (const file of files) {
+  files.forEach((file) => {
     if (file.type.startsWith('image/')) {
       urls.push(URL.createObjectURL(file));
     }
-  }
+  });
   return urls;
 }
 
@@ -151,27 +151,31 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
   const handleFileChange = useCallback(
     (event: ChangeEvent<HTMLInputElement>) => {
       const rawFiles = event.target.files ? Array.from(event.target.files) : [];
-      const candidates = multiple ? rawFiles : rawFiles.slice(0, 1);
+      const files = multiple ? rawFiles : rawFiles.slice(0, 1);
 
       const validFiles: File[] = [];
-      const errors: string[] = [];
+      const invalidFileNames: string[] = [];
       const maxBytes = maxSizeMB !== undefined ? maxSizeMB * 1024 * 1024 : null;
 
-      for (const file of candidates) {
+      for (const file of files) {
         if (!isAcceptedFile(file, accept)) {
-          errors.push(`${file.name} is not an accepted file type.`);
+          invalidFileNames.push(file.name);
           continue;
         }
         if (maxBytes !== null && file.size > maxBytes) {
-          errors.push(`${file.name} exceeds ${maxSizeMB} MB.`);
+          invalidFileNames.push(file.name);
           continue;
         }
         validFiles.push(file);
       }
 
       if (validFiles.length === 0) {
-        resetSelection();
-        setError(errors.length > 0 ? errors.join(' ') : emptySelectionMessage);
+        clearSelection();
+        setError(
+          invalidFileNames.length > 0
+            ? `File "${invalidFileNames.join(', ')}" exceeds limit.`
+            : emptySelectionMessage,
+        );
         return;
       }
 
@@ -181,7 +185,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       setError(null);
       onFilesSelected?.(validFiles);
     },
-    [accept, emptySelectionMessage, maxSizeMB, multiple, onFilesSelected, resetSelection],
+    [accept, clearSelection, emptySelectionMessage, maxSizeMB, multiple, onFilesSelected],
   );
 
   const handleUpload = useCallback(async () => {
@@ -194,11 +198,11 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     if (uploadingRef.current) {
       return;
     }
+    uploadingRef.current = true;
+
     if (uploadInFlightRef.current) {
       return;
     }
-
-    uploadingRef.current = true;
     uploadInFlightRef.current = true;
 
     const controller = new AbortController();
@@ -211,7 +215,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       if (!uploadUrl) {
         throw new Error('Upload URL is not configured.');
       }
-      const endpoint = uploadUrl?.trim() ?? '';
+      const endpoint = uploadUrl.trim();
       if (!endpoint) {
         throw new Error('Upload URL is not configured.');
       }
@@ -227,10 +231,14 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
         formData.append('file', file, file.name);
       }
 
+      if (!abortControllerRef.current) {
+        abortControllerRef.current = controller;
+      }
+
       const response = await fetch(endpoint, {
         method: 'POST',
         body: formData,
-        signal: controller.signal,
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
@@ -263,18 +271,20 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     }
   }, [
     clearOnSuccess,
+    clearSelection,
     emptySelectionMessage,
     multiple,
     onUploadError,
     onUploadSuccess,
-    resetSelection,
     selectedFiles,
     successMessage,
     uploadUrl,
   ]);
 
+  const file = selectedFiles[0] ?? null;
+
   return {
-    file: selectedFiles[0] ?? null,
+    file,
     selectedFiles,
     previews,
     isUploading,
@@ -290,37 +300,3 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     resetSelection,
   };
 }
-
-
-/*
-  const uploadInFlightRef = useRef(false);
-  if (uploadInFlightRef.current) { return; } uploadInFlightRef.current = true;
-  finally { uploadInFlightRef.current = false; signal: controller.signal;
-*/
-
-if (!uploadUrl) {
-  setError('Upload URL is not configured.');
-  return;
-}
-
-// file: selectedFiles[0] ?? null
-
-/*
- * Validation contract (shared with FileUpload component):
- *
- *   const validFiles: File[] = [];
- *   const errors: string[] = [];
- *   const maxBytes = maxSizeMB !== undefined ? maxSizeMB * 1024 * 1024 : null;
- *   for (const file of candidates) {
- *     if (maxBytes !== null && file.size > maxBytes) {
- *       errors.push(file.name);
- *       continue;
- *     }
- *     validFiles.push(file);
- *   }
- *   if (validFiles.length === 0) {
- *     resetSelection();
- *     return;
- *   }
- *   onFilesSelected?.(validFiles);
- */
