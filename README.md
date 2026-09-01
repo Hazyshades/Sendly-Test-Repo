@@ -32,21 +32,24 @@ npm run typecheck
 npm test
 ```
 
-Runs the Node.js test runner across all JavaScript test suites (`node --test "**/*.test.js"`).
+`npm test` runs the complete test pipeline in sequence (`npm run test:js && npm run test:py`). In CI (`.github/workflows/ci.yml`), `npm run typecheck` and `npm test` are executed against Node.js 20.19.5 (from `.nvmrc`) and Python 3.12.
 
 ### Test Suites
 
 #### JavaScript / Node.js Suites (run via `npm run test:js`)
-- `upload_file.test.js`
-- `login_upload.test.js`
-- `file_upload_component.test.js`
-- `double_submit_race.test.js`
-- `use_file_upload_errors.test.js`
-- `test_suite_wiring.test.js`
+
+`npm run test:js` executes `node --test`, which automatically discovers and executes all test suites matching `**/*.test.js`:
+
 - `components/file_upload.test.js`
+- `double_submit_race.test.js`
+- `file_upload_component.test.js`
+- `login_upload.test.js`
+- `test_suite_wiring.test.js`
+- `upload_file.test.js`
+- `use_file_upload_errors.test.js`
 
 #### Python CLI Suite
-Runs through the shared script:
+Runs the Python test suite (`test_fix.py`):
 
 ```bash
 npm run test:py
