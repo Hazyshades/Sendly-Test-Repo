@@ -32,7 +32,7 @@ npm run typecheck
 npm test
 ```
 
-Runs the Node.js test runner across all JavaScript test suites (`node --test "**/*.test.js"`).
+Runs both the JavaScript test runner across all test suites (`npm run test:js` via `node --test`) and the Python test suite (`npm run test:py` via `python3 -m unittest test_fix -v`), returning a non-zero exit code if any test fails to ensure CI and local runs fail immediately on test failures.
 
 ### Test Suites
 
