@@ -3,8 +3,8 @@
   "private": true,
   "scripts": {
     "test": "npm run test:js && npm run test:py",
-    "test:js": "node --test \"**/*.test.js\"",
-    "test:py": "python -m unittest test_fix.py",
+    "test:js": "node --test",
+    "test:py": "python3 -m unittest test_fix -v",
     "typecheck": "tsc --noEmit"
   },
   "devDependencies": {

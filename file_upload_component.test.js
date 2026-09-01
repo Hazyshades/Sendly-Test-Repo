@@ -10,3 +10,13 @@ test('FileUpload keeps image preview URL cleanup', () => {
   assert.match(source, /URL\.revokeObjectURL\(url\)/);
   assertValidationContract(source);
 });
+
+test('preview creation and revocation are owned by the shared hook', () => {
+  assert.match(hookSource, /URL\.createObjectURL\(file\)/);
+  assert.match(hookSource, /URL\.revokeObjectURL\(url\)/);
+});
+
+test('validation contract is enforced against the hook that owns selection', () => {
+  assertValidationContract(hookSource);
+  assertValidationContract(source);
+});
