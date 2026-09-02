@@ -27,7 +27,7 @@ npm run typecheck
 npm test
 ```
 
-`npm test` runs the complete test pipeline in sequence (`npm run test:js && npm run test:py`). In CI (`.github/workflows/ci.yml`), `npm run typecheck` and `npm test` are executed against Node.js 20.19.5 (from `.nvmrc`) and Python 3.12.
+Runs both the JavaScript test runner across all test suites (`npm run test:js` via `node --test`) and the Python test suite (`npm run test:py` via `python3 -m unittest test_fix -v`), returning a non-zero exit code if any test fails to ensure CI and local runs fail immediately on test failures.
 
 ### Test Suites
 
