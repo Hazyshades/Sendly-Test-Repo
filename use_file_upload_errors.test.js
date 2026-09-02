@@ -48,9 +48,21 @@ test('maps network and offline fetch failures to a friendly connection message',
     'Network error. Please check your connection and try again.',
   );
 
+  const typeError3 = new TypeError('Load failed');
+  assert.equal(
+    getFriendlyUploadErrorMessage(typeError3),
+    'Network error. Please check your connection and try again.',
+  );
+
   const networkError = new Error('NetworkError when attempting to fetch resource.');
   assert.equal(
     getFriendlyUploadErrorMessage(networkError),
+    'Network error. Please check your connection and try again.',
+  );
+
+  const reactNativeNetworkError = new Error('Network request failed');
+  assert.equal(
+    getFriendlyUploadErrorMessage(reactNativeNetworkError),
     'Network error. Please check your connection and try again.',
   );
 
@@ -59,12 +71,36 @@ test('maps network and offline fetch failures to a friendly connection message',
     getFriendlyUploadErrorMessage(offlineError),
     'Network error. Please check your connection and try again.',
   );
+
+  const chromiumOfflineError = new Error('net::ERR_INTERNET_DISCONNECTED');
+  assert.equal(
+    getFriendlyUploadErrorMessage(chromiumOfflineError),
+    'Network error. Please check your connection and try again.',
+  );
 });
 
 test('maps unknown or generic errors to a safe fallback message', () => {
   const unknownError = new Error('Unexpected token < in JSON');
   assert.equal(
     getFriendlyUploadErrorMessage(unknownError),
+    'Upload failed. Please try again.',
+  );
+
+  const syntaxError = new SyntaxError('Unexpected token < in JSON');
+  assert.equal(
+    getFriendlyUploadErrorMessage(syntaxError),
+    'Upload failed. Please try again.',
+  );
+
+  const typeErrorNotNetwork = new TypeError('Unexpected token < in JSON');
+  assert.equal(
+    getFriendlyUploadErrorMessage(typeErrorNotNetwork),
+    'Upload failed. Please try again.',
+  );
+
+  const genericTypeError = new TypeError('Cannot read properties of undefined');
+  assert.equal(
+    getFriendlyUploadErrorMessage(genericTypeError),
     'Upload failed. Please try again.',
   );
 
