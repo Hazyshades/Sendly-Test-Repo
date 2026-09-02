@@ -26,20 +26,17 @@ npm ci
 # or npm install
 ```
 
-### Type Checking
+Runs all JavaScript test suites (`npm run test:js` / `node --test`) and the Python CLI test suite (`npm run test:py` / `python3 -m unittest test_fix.py`). Node.js version is pinned to `20.19.5` in `.nvmrc`.
 
-To run TypeScript type checks:
-
+Individual test suites can also be run separately:
 ```bash
-npm run typecheck
+npm run test:js   # Runs Node.js test runner across all *.test.js files
+npm run test:py   # Runs Python CLI test suite (test_fix.py)
 ```
 
 ### Test Suites
 
-#### JavaScript / Node.js Suites (run in CI via `npm test`)
-
-`npm test` runs `node --test`, which automatically discovers every `**/*.test.js` file in the repository. The full list of suites currently executed is:
-
+#### JavaScript / Node.js Suites (run in CI via `npm test` / `npm run test:js`)
 - `upload_file.test.js`
 - `login_upload.test.js`
 - `file_upload_component.test.js`
@@ -47,14 +44,18 @@ npm run typecheck
 - `use_file_upload_errors.test.js`
 - `test_suite_wiring.test.js`
 - `components/file_upload.test.js`
-- `use_file_upload_errors.test.js`
 - `test_suite_wiring.test.js`
+- `use_file_upload_errors.test.js`
 
-#### Python CLI Suite (run in CI via `python -m unittest test_fix -v`)
-To run the Python CLI test suite locally:
+#### Python CLI Suite (run in CI via `npm test` / `npm run test:py`)
+To run the Python CLI test suite directly (`test_fix.py`):
 
 ```bash
-python -m unittest test_fix -v
+npm run test:py
+```
+or:
+```bash
+python3 -m unittest test_fix.py
 ```
 
 or equivalently:
