@@ -34,7 +34,22 @@ const getDefaultUploadUrl = (): string => {
 export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
   uploadUrl = getDefaultUploadUrl(),
   maxSizeMB = 5,
-}) => {
+  onFilesSelected,
+  onUploadSuccess,
+  onUploadError,
+}: IncorrectUploadProps) {
+  const uploadOptions: UseFileUploadOptions = {
+    uploadUrl,
+    maxSizeMB,
+    multiple: false,
+    clearOnSuccess: true,
+    successMessage: 'Upload successful.',
+    emptySelectionMessage: 'Please select a file before uploading.',
+    onFilesSelected,
+    onUploadSuccess,
+    onUploadError,
+  };
+
   const {
     file,
     isUploading,
@@ -55,7 +70,15 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
 
   return (
     <div>
-      <input ref={inputRef} type="file" onChange={handleFileChange} />
+      <label htmlFor="login-file-input">Upload file</label>
+      <input
+        id="login-file-input"
+        ref={inputRef}
+        type="file"
+        onChange={handleFileChange}
+        disabled={isUploading}
+        aria-describedby="login-upload-status"
+      />
       <button
         type="button"
         onClick={handleUpload}

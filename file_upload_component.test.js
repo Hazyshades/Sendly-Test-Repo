@@ -5,7 +5,17 @@ const { assertValidationContract } = require('./components/file_upload_contract.
 
 const hookSource = readFileSync('lib/useFileUpload.ts', 'utf8');
 
-test('useFileUpload follows the shared file validation contract', () => {
+test('FileUpload keeps image preview URL cleanup', () => {
+  assert.match(source, /URL\.createObjectURL\(file\)/);
+  assert.match(source, /URL\.revokeObjectURL\(url\)/);
+});
+
+test('preview creation and revocation are owned by the shared hook', () => {
+  assert.match(hookSource, /URL\.createObjectURL\(file\)/);
+  assert.match(hookSource, /URL\.revokeObjectURL\(url\)/);
+});
+
+test('validation contract is enforced against the hook that owns selection', () => {
   assertValidationContract(hookSource);
 });
 
