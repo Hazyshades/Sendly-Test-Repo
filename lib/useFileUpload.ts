@@ -85,8 +85,8 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     setPreviews(nextPreviews);
   }, []);
 
-  // Single clearSelection implementation
   const clearSelection = useCallback(() => {
+    setSelectedFiles([]);
     replacePreviews([]);
     setSelectedFiles([]);
     if (inputRef.current) {
@@ -107,21 +107,15 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     });
   }, []);
 
+  const resetSelection = clearSelection;
+
   const selectFiles = useCallback(
     (files: File[]) => {
+      const maxBytes = maxSizeMB !== undefined ? maxSizeMB * 1024 * 1024 : null;
       const validFiles: File[] = [];
       const invalidFileNames: string[] = [];
-      const candidates = multiple ? files : files.slice(0, 1);
-      const maxBytes =
-        maxSizeMB !== undefined && Number.isFinite(maxSizeMB) && maxSizeMB > 0
-          ? maxSizeMB * 1024 * 1024
-          : null;
 
-      if (!multiple && files.length > 1) {
-        invalidFileNames.push('(only one file can be selected at a time)');
-      }
-
-      for (const file of candidates) {
+      for (const file of files) {
         if (maxBytes !== null && file.size > maxBytes) {
           invalidFileNames.push(file.name);
           continue;
@@ -138,33 +132,31 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       setMessage(null);
 
       if (validFiles.length === 0) {
+        clearSelection();
         setError(
           invalidFileNames.length > 0
-            ? `File(s) not accepted: ${invalidFileNames.join(', ')}`
+            ? `File${invalidFileNames.length === 1 ? '' : 's'} "${invalidFileNames.join(', ')}" exceed${
+                invalidFileNames.length === 1 ? 's' : ''
+              } ${maxSizeMB}MB limit.`
             : 'No valid files selected.',
         );
-        clearSelection();
         return;
       }
 
+      const nextPreviews = validFiles.map((file) =>
+        file.type.startsWith('image/') ? URL.createObjectURL(file) : '',
+      );
+
+      setSelectedFiles(validFiles);
+      replacePreviews(nextPreviews);
       setError(
         invalidFileNames.length > 0
-          ? `Some files were skipped: ${invalidFileNames.join(', ')}`
+          ? `Skipped oversized or unaccepted file${invalidFileNames.length === 1 ? '' : 's'}: ${invalidFileNames.join(', ')}.`
           : null,
       );
-      setSelectedFiles(validFiles);
-
-      const newPreviews = validFiles.map((file) => {
-        if (file.type.startsWith("image/")) {
-          return URL.createObjectURL(file);
-        }
-        return "";
-      });
-      replacePreviews(newPreviews);
-
       onFilesSelected?.(validFiles);
     },
-    [accept, maxSizeMB, multiple, onFilesSelected, replacePreviews, clearSelection, isAcceptedFile],
+    [accept, clearSelection, maxSizeMB, onFilesSelected, replacePreviews],
   );
 
   const handleFileChange = useCallback(
@@ -187,14 +179,17 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     if (uploadingRef.current) {
       return;
     }
-
     uploadingRef.current = true;
-    const controller = new AbortController();
-    abortControllerRef.current = controller;
-
+    if (uploadInFlightRef.current) {
+      return;
+    }
+    uploadInFlightRef.current = true;
     setIsUploading(true);
     setMessage(null);
     setError(null);
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
 
     try {
       const formData = new FormData();
@@ -207,7 +202,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       const response = await fetch(targetUrl, {
         method: 'POST',
         body: formData,
-        signal: controller.signal,
+        signal: abortControllerRef.current.signal,
       });
 
       if (!response.ok) {
@@ -228,29 +223,33 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       if (uploadError instanceof Error && uploadError.name === 'AbortError') {
         return;
       }
-      const friendlyMsg = uploadError instanceof Error ? uploadError.message : 'Upload failed';
+
+      const uploadErrorMessage = getFriendlyUploadErrorMessage(uploadError);
       if (isMountedRef.current) {
-        setError(friendlyMsg);
-        onError?.(friendlyMsg);
-        onUploadError?.(friendlyMsg);
+        setError(uploadErrorMessage);
+        onUploadError?.(uploadErrorMessage);
       }
+      console.error('Upload error:', uploadError);
     } finally {
       if (isMountedRef.current) {
         setIsUploading(false);
         setUploading(false);
       }
       uploadingRef.current = false;
-      abortControllerRef.current = null;
+      uploadInFlightRef.current = false;
+      if (isMountedRef.current) {
+        setIsUploading(false);
+      }
     }
   }, [
     clearOnSuccess,
+    clearSelection,
     emptySelectionMessage,
     multiple,
     onError,
     onSuccess,
     onUploadError,
     onUploadSuccess,
-    clearSelection,
     selectedFiles,
     successMessage,
     uploadUrl,
@@ -261,22 +260,6 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     setError(null);
     setMessage(null);
   }, [clearSelection]);
-
-  useEffect(() => {
-    isMountedRef.current = true;
-
-    return () => {
-      isMountedRef.current = false;
-      abortControllerRef.current?.abort();
-      abortControllerRef.current = null;
-      previewsRef.current.forEach((url) => {
-        if (url) {
-          URL.revokeObjectURL(url);
-        }
-      });
-      previewsRef.current = [];
-    };
-  }, []);
 
   return {
     file: selectedFiles[0] ?? null,

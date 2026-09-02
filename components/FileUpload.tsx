@@ -116,36 +116,62 @@ export function FileUpload({
 
   return (
     <div>
-      <label htmlFor="file-upload-input">Choose file</label>
+      <label htmlFor="file-upload-input">Select {multiple ? 'files' : 'a file'}</label>
       <input
         id="file-upload-input"
         ref={inputRef}
-        id={inputId}
         type="file"
         accept={accept}
         multiple={multiple}
-        aria-describedby="file-upload-status file-upload-error"
-        onChange={handleFilesChanged}
-        disabled={isUploading}
+        aria-describedby={error ? 'file-upload-error' : message ? 'file-upload-status' : undefined}
+        aria-invalid={Boolean(error)}
+        onChange={handleFileChange}
       />
-      <button
-        type="button"
-        onClick={submitUpload}
-        disabled={isUploading || uploadingRef.current}
-      >
-        {isUploading ? 'Uploading…' : 'Upload'}
-      </button>
-      <div>
-        {previews.map((preview) => (
-          <img key={preview} src={preview} alt="Upload preview" />
-        ))}
-      </div>
-      <p id="file-upload-error" role="alert">
-        {error}
-      </p>
-      <p id="file-upload-status" role="status">
-        {message}
-      </p>
+      {error && (
+        <p id="file-upload-error" role="alert" style={{ color: 'red' }}>
+          {error}
+        </p>
+      )}
+      {message && (
+        <p id="file-upload-status" role="status">
+          {message}
+        </p>
+      )}
+      {selectedFiles.map((file, index) => (
+        <div key={`${file.name}-${file.lastModified}-${index}`}>
+          {previews[index] && (
+            <img
+              src={previews[index]}
+              alt={`Preview of ${file.name}`}
+              style={{ width: 100, height: 100, objectFit: 'cover' }}
+            />
+          )}
+          <span>{file.name}</span>
+        </div>
+      ))}
+      {selectedFiles.length > 0 && (
+        <>
+          <button
+            type="button"
+            onClick={handleRemove}
+            disabled={isUploading || uploadingRef.current}
+          >
+            {multiple ? 'Remove all' : 'Remove'}
+          </button>
+          {uploadUrl && (
+            <button
+              type="button"
+              onClick={handleUpload}
+              disabled={isUploading || uploadingRef.current}
+              aria-busy={isUploading}
+            >
+              {isUploading ? 'Uploading...' : 'Upload'}
+            </button>
+          )}
+        </>
+      )}
     </div>
   );
-}
+};
+
+// disabled={isUploading}

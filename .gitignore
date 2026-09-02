@@ -7,4 +7,5 @@ AGENTCLAW_*
 
 # Scanner runs and ephemeral artifacts
 strix_runs/
-.serena/
+__pycache__/
+*.pyc
