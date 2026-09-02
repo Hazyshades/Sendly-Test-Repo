@@ -17,24 +17,36 @@ Webhook integration repo for GitHub agent bounty workflows (Sendly).
 
 ## Development
 
-### Prerequisites & Installation
+Node.js version is pinned to `20.19.5` (defined in `.nvmrc`). Python 3.12 is used for Python CLI tests.
 
-Node.js version is pinned to `20.19.5` in `.nvmrc`. Install dependencies via:
+To set up the repository and run all checks locally (matching CI), use the following commands:
 
 ```bash
-npm ci   # reproducible install from the committed package-lock.json
+# Install dependencies
+npm install # or npm ci
+
+# Run TypeScript type checking
 npm run typecheck
 npm test
 ```
 
-Runs both the JavaScript test runner across all test suites (`npm run test:js` via `node --test`) and the Python test suite (`npm run test:py` via `python3 -m unittest test_fix -v`), returning a non-zero exit code if any test fails to ensure CI and local runs fail immediately on test failures.
+`npm test` runs both the JavaScript test runner (`npm run test:js` via `node --test`) and the Python CLI test suite (`npm run test:py` via `python3 -m unittest test_fix -v`).
 
 ### Test Suites
 
 #### JavaScript / Node.js Suites (run via `npm run test:js`)
-
-`npm run test:js` executes `node --test`, which automatically discovers and executes all test suites matching `**/*.test.js`:
-
+Runs the Node.js test runner across all JavaScript test suites:
+```bash
+npm run test:js
+# or directly
+node --test
+```
+- `upload_file.test.js`
+- `login_upload.test.js`
+- `file_upload_component.test.js`
+- `double_submit_race.test.js`
+- `use_file_upload_errors.test.js`
+- `test_suite_wiring.test.js`
 - `components/file_upload.test.js`
 - `double_submit_race.test.js`
 - `file_upload_component.test.js`
