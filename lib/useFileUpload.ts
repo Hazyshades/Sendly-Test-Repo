@@ -1,36 +1,23 @@
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
+import type { ChangeEvent, MutableRefObject, RefObject } from 'react';
 import {
   UploadHttpError,
   getFriendlyUploadErrorMessage,
-} from './mapUploadError';
+} from './mapUploadError.cjs';
 
 export { UploadHttpError, getFriendlyUploadErrorMessage };
 
 export interface UseFileUploadOptions {
-  /** URL to upload files to */
   uploadUrl?: string;
-  /** Maximum file size in MB */
-  maxSizeMB?: number;
-  /** Allow multiple file selection */
-  multiple?: boolean;
-  /** Accepted file types (MIME types or extensions) */
   accept?: string;
-  /** Clear selected files after successful upload */
+  maxSizeMB?: number;
+  multiple?: boolean;
   clearOnSuccess?: boolean;
-  /** Message to display on successful upload */
   successMessage?: string;
-  /** Message to display when no files are selected */
   emptySelectionMessage?: string;
-  /** Callback when files are selected */
   onFilesSelected?: (files: File[]) => void;
-  /** Callback when upload succeeds */
-  onSuccess?: (response: any) => void;
-  /** Callback when upload fails */
-  onError?: (error: string) => void;
-  /** Callback when upload succeeds (alias) */
   onUploadSuccess?: () => void;
-  /** Callback when upload fails (alias) */
-  onUploadError?: (error: string) => void;
+  onUploadError?: (message: string) => void;
 }
 
 export interface UseFileUploadReturn {
@@ -40,18 +27,22 @@ export interface UseFileUploadReturn {
   isUploading: boolean;
   message: string | null;
   error: string | null;
-  inputRef: React.RefObject<HTMLInputElement>;
-  handleFileChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
+  inputRef: RefObject<HTMLInputElement>;
+  uploadingRef: MutableRefObject<boolean>;
+  uploadInFlightRef: MutableRefObject<boolean>;
+  handleFileChange: (event: ChangeEvent<HTMLInputElement>) => void;
   handleUpload: () => Promise<void>;
-  handleRemove: () => void;
+  commitSelection: (files: File[]) => void;
+  clearSelection: () => void;
+  resetSelection: () => void;
 }
 
 /**
  * Decide whether a file matches the accept filter.
  * Top-level helper so the rule lives in one place (see #251).
  */
-function isAcceptedFile(file: File, accept?: string): boolean {
-  if (!accept) {
+export function isAcceptedFile(file: File, accept?: string): boolean {
+  if (!accept || accept.trim() === '') {
     return true;
   }
   const patterns = accept
@@ -78,67 +69,72 @@ function isAcceptedFile(file: File, accept?: string): boolean {
 }
 
 /**
- * Create object URLs for image previews (owned by the hook, see #276).
- */
-function makePreviews(files: File[]): string[] {
-  const urls: string[] = [];
-  files.forEach((file) => {
-    if (file.type.startsWith('image/')) {
-      urls.push(URL.createObjectURL(file));
-    }
-  });
-  return urls;
-}
-
-/**
  * Shared upload hook: selection, validation, previews, re-entry guards,
  * abort-on-unmount, and multipart upload with friendly error mapping.
  */
 export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUploadReturn {
   const {
     uploadUrl,
-    maxSizeMB = 10,
+    accept,
+    maxSizeMB = 5,
     multiple = false,
-    accept = '*/*',
     clearOnSuccess = false,
-    successMessage = 'Upload successful!',
+    successMessage = 'Upload successful.',
     emptySelectionMessage = 'Please select a file before uploading.',
     onFilesSelected,
-    onSuccess,
-    onError,
     onUploadSuccess,
     onUploadError,
   } = options;
 
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
-  const [previews, setPreviews] = useState<string[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [previews, setPreviews] = useState<string[]>([]);
 
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadingRef = useRef(false);
+  const uploadInFlightRef = useRef(false);
   const abortControllerRef = useRef<AbortController | null>(null);
-  const isMountedRef = useRef(true);
   const previewsRef = useRef<string[]>([]);
 
-  // Revoke all existing preview object URLs, then set the new list.
-  const replacePreviews = useCallback((nextPreviews: string[]) => {
-    previewsRef.current.forEach((url) => {
-      if (url) {
-        URL.revokeObjectURL(url);
-      }
-    });
-    previewsRef.current = nextPreviews;
-    setPreviews(nextPreviews);
+  const file = selectedFiles[0] ?? null;
+
+  useEffect(() => {
+    previewsRef.current = previews;
+  }, [previews]);
+
+  // Abort any in-flight request and revoke preview URLs on unmount.
+  useEffect(() => {
+    return () => {
+      abortControllerRef.current?.abort();
+      previewsRef.current.forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
   }, []);
 
   const clearSelection = useCallback(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    uploadingRef.current = false;
+    uploadInFlightRef.current = false;
     setSelectedFiles([]);
-    replacePreviews([]);
-    setSelectedFiles([]);
+    setPreviews((prev) => {
+      prev.forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      return [];
+    });
+    setMessage(null);
+    setError(null);
+    setIsUploading(false);
     if (inputRef.current) {
-      inputRef.current.value = "";
+      inputRef.current.value = '';
     }
   }, [replacePreviews]);
 
@@ -155,25 +151,28 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     });
   }, []);
 
-  const resetSelection = clearSelection;
+  const resetSelection = useCallback(() => {
+    clearSelection();
+  }, [clearSelection]);
 
   const commitSelection = useCallback((files: File[]) => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
     setSelectedFiles(files);
-    setPreviews(makePreviews(files));
+    const newPreviews = files.map((file) => {
+      if (file.type.startsWith('image/')) {
+        return URL.createObjectURL(file);
+      }
+      return '';
+    });
+    setPreviews(newPreviews);
     setMessage(null);
     setError(null);
   }, []);
 
-  const handleFileChange = useCallback(
-    (event: ChangeEvent<HTMLInputElement>) => {
-      const rawFiles = event.target.files ? Array.from(event.target.files) : [];
-      const files = multiple ? rawFiles : rawFiles.slice(0, 1);
-
-      const validFiles: File[] = [];
-      const invalidFileNames: string[] = [];
-      const maxBytes = maxSizeMB !== undefined ? maxSizeMB * 1024 * 1024 : null;
+  const selectFiles = useCallback(
+    (files: File[]) => {
+      const maxBytes = maxSizeMB * 1024 * 1024;
       const validFiles: File[] = [];
       const invalidFileNames: string[] = [];
 
@@ -201,15 +200,20 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
         clearSelection();
         setError(
           invalidFileNames.length > 0
-            ? `File "${invalidFileNames.join(', ')}" exceeds limit.`
+            ? `File${invalidFileNames.length === 1 ? '' : 's'} "${invalidFileNames.join(', ')}" exceed${
+                invalidFileNames.length === 1 ? 's' : ''
+              } ${maxSizeMB}MB limit.`
             : emptySelectionMessage,
         );
         return;
       }
 
-      const nextPreviews = validFiles.map((file) =>
-        file.type.startsWith('image/') ? URL.createObjectURL(file) : '',
-      );
+      const newPreviews = validFiles.map((file) => {
+        if (file.type.startsWith('image/')) {
+          return URL.createObjectURL(file);
+        }
+        return '';
+      });
 
       setSelectedFiles(validFiles);
       replacePreviews(nextPreviews);
@@ -218,15 +222,26 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
           ? `Skipped oversized or unaccepted file${invalidFileNames.length === 1 ? '' : 's'}: ${invalidFileNames.join(', ')}.`
           : null,
       );
+
+      setSelectedFiles(validFiles);
+      setPreviews(newPreviews);
       onFilesSelected?.(validFiles);
     },
-    [accept, clearSelection, emptySelectionMessage, maxSizeMB, multiple, onFilesSelected],
+    [accept, clearSelection, emptySelectionMessage, maxSizeMB, onFilesSelected],
+  );
+
+  const handleFileChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const rawFiles = Array.from(event.target.files ?? []);
+      const files = multiple ? rawFiles : rawFiles.slice(0, 1);
+      selectFiles(files);
+    },
+    [multiple, selectFiles],
   );
 
   const handleUpload = useCallback(async () => {
-    const targetUrl = uploadUrl || "https://example.com";
-
     if (selectedFiles.length === 0) {
+      setMessage(null);
       setError(emptySelectionMessage);
       return;
     }
@@ -240,6 +255,9 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       return;
     }
     uploadInFlightRef.current = true;
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
     setIsUploading(true);
     setMessage(null);
     setError(null);
@@ -253,16 +271,16 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
         throw new Error('Upload URL is not configured.');
       }
 
-    try {
       const formData = new FormData();
       const fieldName = multiple ? 'files' : 'file';
-
-      for (const file of selectedFiles) {
+      if (multiple) {
+        for (const file of selectedFiles) {
+          formData.append(fieldName, file, file.name);
+        }
+      } else {
+        const file = selectedFiles[0];
+        formData.append('file', file, file.name);
         formData.append(fieldName, file, file.name);
-      }
-
-      if (!abortControllerRef.current) {
-        abortControllerRef.current = controller;
       }
 
       const response = await fetch(endpoint, {
@@ -272,56 +290,44 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       });
 
       if (!response.ok) {
-        throw new Error(`Upload failed with status ${response.status}`);
+        throw new UploadHttpError(response.status);
       }
 
-      const data = await response.json();
-
-      if (isMountedRef.current) {
-        setMessage(successMessage);
-        if (clearOnSuccess) {
-          clearSelection();
-        }
-        onSuccess?.(data);
-        onUploadSuccess?.();
+      setMessage(successMessage);
+      if (clearOnSuccess) {
+        clearSelection();
       }
+      onUploadSuccess?.();
     } catch (uploadError) {
-      if (uploadError instanceof Error && uploadError.name === 'AbortError') {
+      if (
+        uploadError instanceof Error &&
+        (uploadError.name === 'AbortError' || uploadError.name === 'CanceledError')
+      ) {
         return;
       }
-
       const uploadErrorMessage = getFriendlyUploadErrorMessage(uploadError);
-      if (isMountedRef.current) {
-        setError(uploadErrorMessage);
-        onUploadError?.(uploadErrorMessage);
-      }
+      setError(uploadErrorMessage);
+      onUploadError?.(uploadErrorMessage);
       console.error('Upload error:', uploadError);
     } finally {
-      if (isMountedRef.current) {
-        setIsUploading(false);
-        setUploading(false);
-      }
       uploadingRef.current = false;
       uploadInFlightRef.current = false;
-      if (isMountedRef.current) {
-        setIsUploading(false);
+      if (abortControllerRef.current === controller) {
+        abortControllerRef.current = null;
       }
+      setIsUploading(false);
     }
   }, [
     clearOnSuccess,
     clearSelection,
     emptySelectionMessage,
     multiple,
-    onError,
-    onSuccess,
     onUploadError,
     onUploadSuccess,
     selectedFiles,
     successMessage,
     uploadUrl,
   ]);
-
-  const file = selectedFiles[0] ?? null;
 
   return {
     file,
@@ -331,8 +337,12 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     message,
     error,
     inputRef,
+    uploadingRef,
+    uploadInFlightRef,
     handleFileChange,
     handleUpload,
-    handleRemove,
+    commitSelection,
+    clearSelection,
+    resetSelection,
   };
 }

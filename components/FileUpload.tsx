@@ -13,6 +13,26 @@ export interface FileUploadProps {
 }
 
 /**
+ * Size validation for the candidate list, mirroring the shared contract
+ * enforced by components/file_upload_contract.cjs.
+ */
+function validateCandidates(files: File[], maxSizeMB: number = 5) {
+  const maxBytes = maxSizeMB * 1024 * 1024;
+  const validFiles: File[] = [];
+  const invalidFileNames: string[] = [];
+
+  for (const file of files) {
+    if (file.size > maxBytes) {
+      invalidFileNames.push(file.name);
+      continue;
+    }
+    validFiles.push(file);
+  }
+
+  return { validFiles, invalidFileNames };
+}
+
+/**
  * Thin file picker over the shared useFileUpload hook (see #252/#269):
  * the hook owns selection, upload, and error state; this component renders
  * the controls, previews, status lines, and a local re-entry guard.
@@ -20,7 +40,7 @@ export interface FileUploadProps {
 export function FileUpload({
   uploadUrl,
   accept,
-  maxSizeMB,
+  maxSizeMB = 5,
   multiple = false,
   onFilesSelected,
   onUploadSuccess,
@@ -83,20 +103,11 @@ export function FileUpload({
 
   const handleFilesChanged = (event: ChangeEvent<HTMLInputElement>) => {
     const files = event.target.files ? Array.from(event.target.files) : [];
-    const validFiles: File[] = [];
-    const invalidFileNames: string[] = [];
-    const maxBytes = maxSizeMB !== undefined ? maxSizeMB * 1024 * 1024 : null;
-
-    for (const file of files) {
-      if (maxBytes !== null && file.size > maxBytes) {
-        invalidFileNames.push(file.name);
-        continue;
-      }
-      validFiles.push(file);
-    }
+    const { validFiles } = validateCandidates(files, maxSizeMB);
 
     if (validFiles.length === 0) {
       clearSelection();
+      resetSelection();
       onFilesSelected?.(validFiles);
       return;
     }
