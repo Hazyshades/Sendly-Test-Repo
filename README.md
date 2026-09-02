@@ -22,8 +22,8 @@ Webhook integration repo for GitHub agent bounty workflows (Sendly).
 Node.js version is pinned to `20.19.5` in `.nvmrc`. Install dependencies via:
 
 ```bash
-npm ci
-# or npm install
+npm ci   # reproducible install from the committed package-lock.json
+npm test
 ```
 
 Runs all JavaScript test suites (`npm run test:js` / `node --test`) and the Python CLI test suite (`npm run test:py` / `python3 -m unittest test_fix.py`). Node.js version is pinned to `20.19.5` in `.nvmrc`.
