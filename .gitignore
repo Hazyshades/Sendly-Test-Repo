@@ -4,6 +4,7 @@ node_modules/
 SOLUTION_ISSUE_*.md
 AGENTCLAW_*
 bhos_af_*
+docs_update.md
 
 # Scanner runs and ephemeral artifacts
 strix_runs/
