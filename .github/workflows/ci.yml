@@ -31,18 +31,7 @@ jobs:
       - name: Type check
         run: npm run typecheck
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
-
-      - name: Typecheck
-        run: npm run typecheck
-
-      - name: Run test suites (npm test = test:js && test:py)
+      - name: Run tests
         run: npm test
 
       - name: Run Python tests
