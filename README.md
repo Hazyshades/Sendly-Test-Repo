@@ -50,13 +50,15 @@ npm run typecheck
 - `use_file_upload_errors.test.js`
 - `test_suite_wiring.test.js`
 
-#### Python CLI Suite
-To run the Python CLI test suite (`test_fix.py`):
+#### Python CLI Suite (run in CI via `python -m unittest test_fix -v`)
+To run the Python CLI test suite locally:
 
 ```bash
-python3 -m unittest test_fix.py
+python -m unittest test_fix -v
 ```
-or:
+
+or equivalently:
+
 ```bash
 python test_fix.py
 ```
