@@ -38,22 +38,14 @@ npm run typecheck
 
 #### JavaScript / Node.js Suites (run in CI via `npm test`)
 
-```bash
-# Install dependencies
-npm ci
+`npm test` runs `node --test`, which automatically discovers every `**/*.test.js` file in the repository. The full list of suites currently executed is:
 
-# Run TypeScript type checking
-npm run typecheck
-
-# Run all test suites (JavaScript and Python)
-npm test
-```
-
-Runs the native Node.js test runner (`node --test`) across all JavaScript test suites:
 - `upload_file.test.js`
 - `login_upload.test.js`
 - `file_upload_component.test.js`
 - `double_submit_race.test.js`
+- `use_file_upload_errors.test.js`
+- `test_suite_wiring.test.js`
 - `components/file_upload.test.js`
 - `use_file_upload_errors.test.js`
 - `test_suite_wiring.test.js`
