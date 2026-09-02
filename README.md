@@ -23,16 +23,11 @@ Node.js version is pinned to `20.19.5` in `.nvmrc`. Install dependencies via:
 
 ```bash
 npm ci   # reproducible install from the committed package-lock.json
+npm run typecheck
 npm test
 ```
 
-Runs all JavaScript test suites (`npm run test:js` / `node --test`) and the Python CLI test suite (`npm run test:py` / `python3 -m unittest test_fix.py`). Node.js version is pinned to `20.19.5` in `.nvmrc`.
-
-Individual test suites can also be run separately:
-```bash
-npm run test:js   # Runs Node.js test runner across all *.test.js files
-npm run test:py   # Runs Python CLI test suite (test_fix.py)
-```
+Runs TypeScript type checking (`tsc --noEmit`) and the Node.js test runner across all JavaScript test suites (`node --test`). Node.js version is pinned to `20.19.5` in `.nvmrc`.
 
 ### Test Suites
 
