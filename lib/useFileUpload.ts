@@ -136,7 +136,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     if (inputRef.current) {
       inputRef.current.value = '';
     }
-  }, [replacePreviews]);
+  }, []);
 
   // Check if file matches accept filter
   const isAcceptedFile = useCallback((file: File, acceptFilter: string): boolean => {
@@ -181,12 +181,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
           invalidFileNames.push(file.name);
           continue;
         }
-        if (maxBytes !== null && file.size > maxBytes) {
-          invalidFileNames.push(file.name);
-          continue;
-        }
-
-        if (!isAcceptedFile(file, accept)) {
+        if (file.size > maxBytes) {
           invalidFileNames.push(file.name);
           continue;
         }
@@ -216,14 +211,12 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       });
 
       setSelectedFiles(validFiles);
-      replacePreviews(nextPreviews);
       setError(
         invalidFileNames.length > 0
           ? `Skipped oversized or unaccepted file${invalidFileNames.length === 1 ? '' : 's'}: ${invalidFileNames.join(', ')}.`
           : null,
       );
 
-      setSelectedFiles(validFiles);
       setPreviews(newPreviews);
       onFilesSelected?.(validFiles);
     },
