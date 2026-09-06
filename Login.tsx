@@ -1,5 +1,6 @@
 import React from "react";
 import { useFileUpload } from "./lib/useFileUpload";
+import type { UseFileUploadOptions } from "./lib/useFileUpload";
 
 export interface IncorrectUploadProps {
   uploadUrl?: string;
@@ -8,6 +9,9 @@ export interface IncorrectUploadProps {
    * Defaults to 5 MB.
    */
   maxSizeMB?: number;
+  onFilesSelected?: (files: File[]) => void;
+  onUploadSuccess?: () => void;
+  onUploadError?: (message: string) => void;
 }
 
 type SendlyRuntime = typeof globalThis & {
@@ -37,7 +41,7 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
   onFilesSelected,
   onUploadSuccess,
   onUploadError,
-}: IncorrectUploadProps) {
+}) => {
   const uploadOptions: UseFileUploadOptions = {
     uploadUrl,
     maxSizeMB,
