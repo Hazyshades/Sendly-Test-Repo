@@ -1,3 +1,3 @@
-# Documentation & Reference for Issue #260
+# Documentation & Reference for Issue #386
 
-Resolved autonomous update for '[Bug] .nvmrc pins 20.19.5 while CI still uses node-version: 20'.
+Resolved autonomous update for '[Bug] CI runs the Python suite twice and README lists every JS test file twice'.
