@@ -1,7 +1,9 @@
-import { useEffect, useMemo, useRef } from 'react';
-import type { ChangeEvent } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useFileUpload } from '../lib/useFileUpload';
 
+/**
+ * Props for the FileUpload component.
+ */
 export interface FileUploadProps {
   uploadUrl?: string;
   accept?: string;
@@ -13,29 +15,10 @@ export interface FileUploadProps {
 }
 
 /**
- * Size validation for the candidate list, mirroring the shared contract
- * enforced by components/file_upload_contract.cjs.
- */
-function validateCandidates(files: File[], maxSizeMB: number = 5) {
-  const maxBytes = maxSizeMB * 1024 * 1024;
-  const validFiles: File[] = [];
-  const invalidFileNames: string[] = [];
-
-  for (const file of files) {
-    if (file.size > maxBytes) {
-      invalidFileNames.push(file.name);
-      continue;
-    }
-    validFiles.push(file);
-  }
-
-  return { validFiles, invalidFileNames };
-}
-
-/**
- * Thin file picker over the shared useFileUpload hook (see #252/#269):
- * the hook owns selection, upload, and error state; this component renders
- * the controls, previews, status lines, and a local re-entry guard.
+ * File upload user interface component delegating selection and upload logic to useFileUpload.
+ *
+ * @param props Configuration options and event callbacks for file upload.
+ * @returns JSX Element rendering the accessible file upload form and preview list.
  */
 export function FileUpload({
   uploadUrl,
@@ -53,10 +36,9 @@ export function FileUpload({
     inputRef,
     uploadingRef,
     selectedFiles,
+    handleFileChange,
     handleUpload,
-    commitSelection,
     clearSelection,
-    resetSelection,
   } = useFileUpload({
     uploadUrl,
     accept,
@@ -85,36 +67,6 @@ export function FileUpload({
       });
     };
   }, [previews]);
-
-  // Synchronous re-entry guard for this component's submit path.
-  const uploadInFlightRef = useRef(false);
-
-  const submitUpload = async () => {
-    if (uploadInFlightRef.current) {
-      return;
-    }
-    uploadInFlightRef.current = true;
-    try {
-      await handleUpload();
-    } finally {
-      uploadInFlightRef.current = false;
-    }
-  };
-
-  const handleFilesChanged = (event: ChangeEvent<HTMLInputElement>) => {
-    const files = event.target.files ? Array.from(event.target.files) : [];
-    const { validFiles } = validateCandidates(files, maxSizeMB);
-
-    if (validFiles.length === 0) {
-      clearSelection();
-      resetSelection();
-      onFilesSelected?.(validFiles);
-      return;
-    }
-
-    commitSelection(validFiles);
-    onFilesSelected?.(validFiles);
-  };
 
   return (
     <div>
@@ -155,7 +107,7 @@ export function FileUpload({
         <>
           <button
             type="button"
-            onClick={handleRemove}
+            onClick={clearSelection}
             disabled={isUploading || uploadingRef.current}
           >
             {multiple ? 'Remove all' : 'Remove'}
@@ -174,6 +126,4 @@ export function FileUpload({
       )}
     </div>
   );
-};
-
-// disabled={isUploading}
+}
