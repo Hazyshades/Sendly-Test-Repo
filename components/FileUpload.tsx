@@ -15,6 +15,15 @@ export interface FileUploadProps {
 }
 
 /**
+ * Pairing of a selected file with its generated object URL preview.
+ */
+export interface FilePreview {
+  id: string;
+  file: File;
+  url: string;
+}
+
+/**
  * File upload user interface component delegating selection and upload logic to useFileUpload.
  *
  * @param props Configuration options and event callbacks for file upload.
@@ -52,17 +61,21 @@ export function FileUpload({
     onUploadError,
   });
 
-  const previews = useMemo(
+  const previews = useMemo<FilePreview[]>(
     () =>
       selectedFiles
         .filter((file) => file.type.startsWith('image/'))
-        .map((file) => URL.createObjectURL(file)),
+        .map((file, index) => ({
+          id: `${file.name}-${file.lastModified}-${index}`,
+          file,
+          url: URL.createObjectURL(file),
+        })),
     [selectedFiles],
   );
 
   useEffect(() => {
     return () => {
-      previews.forEach((url) => {
+      previews.forEach(({ url }) => {
         URL.revokeObjectURL(url);
       });
     };
@@ -91,18 +104,21 @@ export function FileUpload({
           {message}
         </p>
       )}
-      {selectedFiles.map((file, index) => (
-        <div key={`${file.name}-${file.lastModified}-${index}`}>
-          {previews[index] && (
-            <img
-              src={previews[index]}
-              alt={`Preview of ${file.name}`}
-              style={{ width: 100, height: 100, objectFit: 'cover' }}
-            />
-          )}
-          <span>{file.name}</span>
-        </div>
-      ))}
+      {selectedFiles.map((file, index) => {
+        const preview = previews.find((p) => p.file === file);
+        return (
+          <div key={`${file.name}-${file.lastModified}-${index}`}>
+            {preview && (
+              <img
+                src={preview.url}
+                alt={`Preview of ${file.name}`}
+                style={{ width: 100, height: 100, objectFit: 'cover' }}
+              />
+            )}
+            <span>{file.name}</span>
+          </div>
+        );
+      })}
       {selectedFiles.length > 0 && (
         <>
           <button

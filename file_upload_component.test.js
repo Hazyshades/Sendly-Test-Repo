@@ -24,3 +24,9 @@ test('useFileUpload keeps image preview URL cleanup', () => {
   assert.match(hookSource, /URL\.createObjectURL\(/);
   assert.match(hookSource, /URL\.revokeObjectURL\(/);
 });
+
+test('FileUpload binds preview URLs to individual files and avoids index mismatch', () => {
+  assert.doesNotMatch(source, /previews\[index\]/);
+  assert.match(source, /previews\.find\(/);
+});
+
