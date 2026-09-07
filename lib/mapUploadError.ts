@@ -8,28 +8,23 @@ export class UploadHttpError extends Error {
   }
 }
 
-/**
- * Determine whether an error object represents a network/connectivity failure.
- * Mirrors the heuristics in mapUploadError.cjs so the .ts and .cjs sources
- * stay in sync.
- */
 export function isNetworkError(error: unknown): boolean {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     return true;
   }
 
   if (error && typeof error === 'object') {
-    if (
-      (error as { name?: string }).name === 'NetworkError' ||
-      (error as { name?: string }).name === 'OfflineError'
-    ) {
+    const errObj = error as { name?: unknown };
+    if (errObj.name === 'NetworkError' || errObj.name === 'OfflineError') {
       return true;
     }
   }
 
   if (
     error instanceof Error ||
-    (typeof error === 'object' && error !== null && typeof (error as { message?: unknown }).message === 'string')
+    (typeof error === 'object' &&
+      error !== null &&
+      typeof (error as { message?: unknown }).message === 'string')
   ) {
     const message = (error as { message: string }).message.toLowerCase();
     const networkPatterns = [
@@ -77,14 +72,6 @@ export function getFriendlyUploadErrorMessage(error: unknown): string {
   }
 
   if (isNetworkError(error)) {
-    return 'Network error. Please check your connection and try again.';
-  }
-
-  if (error instanceof TypeError && isNetworkError(error)) {
-    return 'Network error. Please check your connection and try again.';
-  }
-
-  if (error instanceof Error && isNetworkError(error)) {
     return 'Network error. Please check your connection and try again.';
   }
 

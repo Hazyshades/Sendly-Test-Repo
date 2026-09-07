@@ -135,3 +135,59 @@ test('useFileUpload source adheres to error handling contract', () => {
   // Preserves full technical error in console.error
   assert.match(hookSource, /console\.error\('Upload error:', uploadError\)/);
 });
+
+test('mapUploadError.ts and mapUploadError.cjs share unified heuristics and export parity', () => {
+  const tsSource = readFileSync('lib/mapUploadError.ts', 'utf8');
+  assert.doesNotMatch(tsSource, /error\s+instanceof\s+TypeError/);
+  assert.doesNotMatch(tsSource, /message\.includes\(['"]network['"]\)/);
+
+  const cjs = require('./lib/mapUploadError.cjs');
+  let ts;
+  try {
+    ts = require('./lib/mapUploadError.ts');
+  } catch {
+    const typescript = require('typescript');
+    const trans = typescript.transpileModule(tsSource, {
+      compilerOptions: { module: typescript.ModuleKind.CommonJS },
+    });
+    const mod = { exports: {} };
+    const fn = new Function('exports', 'module', 'require', trans.outputText);
+    fn(mod.exports, mod, require);
+    ts = mod.exports;
+  }
+
+  assert.equal(typeof cjs.isNetworkError, 'function');
+  assert.equal(typeof ts.isNetworkError, 'function');
+  assert.equal(typeof cjs.getFriendlyUploadErrorMessage, 'function');
+  assert.equal(typeof ts.getFriendlyUploadErrorMessage, 'function');
+  assert.equal(typeof cjs.UploadHttpError, 'function');
+  assert.equal(typeof ts.UploadHttpError, 'function');
+
+  const testCases = [
+    new TypeError('Unexpected token < in JSON'),
+    new TypeError('Cannot read properties of undefined'),
+    new SyntaxError('Unexpected token < in JSON'),
+    new Error('Network error'),
+    new TypeError('Failed to fetch'),
+    new Error('Client is offline'),
+    new cjs.UploadHttpError(404),
+    new ts.UploadHttpError(500),
+    'some string error',
+    null,
+    undefined,
+  ];
+
+  for (const tc of testCases) {
+    assert.equal(
+      ts.isNetworkError(tc),
+      cjs.isNetworkError(tc),
+      `isNetworkError parity failed for ${tc}`,
+    );
+    assert.equal(
+      ts.getFriendlyUploadErrorMessage(tc),
+      cjs.getFriendlyUploadErrorMessage(tc),
+      `getFriendlyUploadErrorMessage parity failed for ${tc}`,
+    );
+  }
+});
+
