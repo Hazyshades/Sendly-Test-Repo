@@ -1,11 +1,29 @@
 const assert = require('node:assert/strict');
-const { readFileSync } = require('node:fs');
+const { execFileSync } = require('node:child_process');
+const { existsSync, readFileSync } = require('node:fs');
 const test = require('node:test');
+
+execFileSync(
+  process.execPath,
+  [
+    './node_modules/typescript/bin/tsc',
+    'lib/mapUploadError.ts',
+    '--target',
+    'ES2022',
+    '--module',
+    'commonjs',
+    '--outDir',
+    '.test-build',
+    '--skipLibCheck',
+  ],
+  { stdio: 'inherit' },
+);
+
 const {
   UploadHttpError,
   getFriendlyUploadErrorMessage,
   isNetworkError,
-} = require('./lib/mapUploadError.cjs');
+} = require('./.test-build/mapUploadError.js');
 
 test('UploadHttpError stores status and maintains proper name and message', () => {
   const err = new UploadHttpError(404);
@@ -137,8 +155,9 @@ test('useFileUpload source adheres to error handling contract', () => {
   assert.match(hookSource, /console\.error\('Upload error:', uploadError\)/);
 });
 
-test('mapUploadError.ts and mapUploadError.cjs export identical heuristics without broad TypeError fallback', () => {
+test('mapUploadError.ts is the single runtime source and avoids broad TypeError fallback', () => {
   const tsSource = readFileSync('lib/mapUploadError.ts', 'utf8');
+  assert.equal(existsSync('lib/mapUploadError.cjs'), false);
   assert.doesNotMatch(tsSource, /error\s+instanceof\s+TypeError/);
   assert.doesNotMatch(tsSource, /message\.includes\(['"]network['"]\)/);
   assert.match(tsSource, /export function isNetworkError/);

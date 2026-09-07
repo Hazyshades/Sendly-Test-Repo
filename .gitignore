@@ -1,4 +1,5 @@
 node_modules/
+.test-build/
 
 # Agent solution notes and dumps
 SOLUTION_ISSUE_*.md
