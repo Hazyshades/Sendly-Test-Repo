@@ -42,18 +42,6 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
   onUploadSuccess,
   onUploadError,
 }) => {
-  const uploadOptions: UseFileUploadOptions = {
-    uploadUrl,
-    maxSizeMB,
-    multiple: false,
-    clearOnSuccess: true,
-    successMessage: 'Upload successful.',
-    emptySelectionMessage: 'Please select a file before uploading.',
-    onFilesSelected,
-    onUploadSuccess,
-    onUploadError,
-  };
-
   const {
     file,
     isUploading,
@@ -66,10 +54,13 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
   } = useFileUpload({
     uploadUrl,
     maxSizeMB,
-    clearOnSuccess: true,
     multiple: false,
+    clearOnSuccess: true,
     successMessage: "Upload successful.",
     emptySelectionMessage: "Please select a file before uploading.",
+    onFilesSelected,
+    onUploadSuccess,
+    onUploadError,
   });
 
   return (
