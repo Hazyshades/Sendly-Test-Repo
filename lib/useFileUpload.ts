@@ -39,31 +39,34 @@ export interface UseFileUploadReturn {
 }
 
 /**
- * Decide whether a file matches the accept filter.
- * Top-level helper so the rule lives in one place (see #251).
+ * Decide whether a file matches an HTML accept filter.
  */
 export function isAcceptedFile(file: File, accept?: string): boolean {
   if (!accept || accept.trim() === '') {
     return true;
   }
+
   const patterns = accept
     .split(',')
     .map((pattern) => pattern.trim().toLowerCase())
-    .filter((pattern) => pattern.length > 0);
+    .filter(Boolean);
+
   if (patterns.length === 0) {
     return true;
   }
+
   const name = file.name.toLowerCase();
   const type = file.type.toLowerCase();
+
   return patterns.some((pattern) => {
+    if (pattern === '*/*') {
+      return true;
+    }
     if (pattern.startsWith('.')) {
       return name.endsWith(pattern);
     }
     if (pattern.endsWith('/*')) {
-      return type.startsWith(pattern.replace('/*', '/'));
-    }
-    if (type.startsWith(`${pattern}/`) || pattern.startsWith(`${type.split('/')[0]}`)) {
-      return true;
+      return type.startsWith(`${pattern.slice(0, -1)}`);
     }
     return type === pattern;
   });
