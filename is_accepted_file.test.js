@@ -44,3 +44,22 @@ test('supports comma-separated filters without broad prefix matches', () => {
   );
   assert.equal(isAcceptedFile(file('data.json', 'application/json'), 'application'), false);
 });
+
+test('enforces single isAcceptedFile implementation without shadowing', () => {
+  const functionDeclarations = hookSource.match(/\bfunction\s+isAcceptedFile\b/g) || [];
+  assert.equal(functionDeclarations.length, 1);
+  assert.doesNotMatch(hookSource, /const\s+isAcceptedFile\s*=/);
+  assert.doesNotMatch(hookSource, /let\s+isAcceptedFile\s*=/);
+  assert.doesNotMatch(hookSource, /var\s+isAcceptedFile\s*=/);
+});
+
+test('runtime file selection uses top-level isAcceptedFile helper', () => {
+  assert.match(
+    hookSource,
+    /selectFiles[\s\S]*?!isAcceptedFile\(file,\s*accept\)/
+  );
+  assert.doesNotMatch(
+    hookSource,
+    /selectFiles[\s\S]*?\[[^\]]*\bisAcceptedFile\b[^\]]*\]/
+  );
+});
