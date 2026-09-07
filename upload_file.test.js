@@ -40,3 +40,20 @@ test('upload handler uses a synchronous ref guard against re-entry in the hook',
   assert.match(hookSource, /finally \{[\s\S]*uploadingRef\.current = false;/);
   assert.doesNotMatch(source, /https:\/\/example\.com/);
 });
+
+test('upload appends exactly one entry per selected file to FormData without duplication', () => {
+  assert.match(hookSource, /const fieldName = multiple \? 'files' : 'file';/);
+  assert.match(
+    hookSource,
+    /for\s*\(\s*const file of selectedFiles\s*\)\s*\{\s*formData\.append\(fieldName, file, file\.name\);\s*\}/,
+  );
+  assert.doesNotMatch(
+    hookSource,
+    /formData\.append\('file', file, file\.name\);[\s\S]*?formData\.append\(fieldName, file, file\.name\);/,
+  );
+});
+
+test('upload retains files field name in multiple mode and file in single mode', () => {
+  assert.match(hookSource, /const fieldName = multiple \? 'files' : 'file';/);
+});
+
