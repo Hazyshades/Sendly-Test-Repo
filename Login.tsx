@@ -1,6 +1,5 @@
 import React from "react";
 import { useFileUpload } from "./lib/useFileUpload";
-import type { UseFileUploadOptions } from "./lib/useFileUpload";
 
 export interface IncorrectUploadProps {
   uploadUrl?: string;
