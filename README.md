@@ -30,7 +30,7 @@ npm run typecheck
 npm test
 ```
 
-`npm test` runs both the JavaScript test runner (`npm run test:js` via `node --test`) and the Python CLI test suite (`npm run test:py` via `python3 -m unittest test_fix.py || python -m unittest test_fix.py`). Any failure in either the JavaScript or Python test suite will immediately return a non-zero exit code, ensuring CI and local test runners fail red.
+`npm test` runs both the JavaScript test runner (`npm run test:js` via `node --test`) and the Python CLI test suite (`npm run test:py` via `python3 -m unittest test_fix -v`). A failure in either the JavaScript or Python test suite will immediately return a non-zero exit code, ensuring CI and local runners fail red.
 
 ### Test Suites
 
