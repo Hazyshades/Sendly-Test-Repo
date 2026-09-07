@@ -158,6 +158,9 @@ test('useFileUpload source adheres to error handling contract', () => {
 test('mapUploadError.ts is the single runtime source and avoids broad TypeError fallback', () => {
   const tsSource = readFileSync('lib/mapUploadError.ts', 'utf8');
   assert.equal(existsSync('lib/mapUploadError.cjs'), false);
+  assert.equal(existsSync('lib/mapUploadError.d.cts'), false);
+  assert.equal(existsSync('lib/mapUploadError.d.ts'), false);
+  assert.doesNotMatch(tsSource, /mapUploadError\.cjs/);
   assert.doesNotMatch(tsSource, /error\s+instanceof\s+TypeError/);
   assert.doesNotMatch(tsSource, /message\.includes\(['"]network['"]\)/);
   assert.match(tsSource, /export function isNetworkError/);

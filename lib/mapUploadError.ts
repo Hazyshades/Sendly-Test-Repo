@@ -12,9 +12,10 @@ export class UploadHttpError extends Error {
 }
 
 /**
- * Determine whether an error object represents a network/connectivity failure.
- * Mirrors the heuristics in mapUploadError.cjs so the .ts and .cjs sources
- * stay in sync.
+ * Evaluates whether an unknown error represents a network or offline failure.
+ *
+ * @param error - The error or rejection value to inspect.
+ * @returns True if the error matches offline or network failure patterns.
  */
 export function isNetworkError(error: unknown): boolean {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
@@ -62,6 +63,12 @@ export function isNetworkError(error: unknown): boolean {
   return false;
 }
 
+/**
+ * Maps an upload error into a friendly, user-facing error message.
+ *
+ * @param error - The upload error to map.
+ * @returns The friendly error message string.
+ */
 export function getFriendlyUploadErrorMessage(error: unknown): string {
   if (
     error instanceof UploadHttpError ||
