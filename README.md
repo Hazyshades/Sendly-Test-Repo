@@ -68,11 +68,21 @@ python test_fix.py
    the issue. The bounty is paid in test USDC on ARC Testnet.
 
 ### Running Tests
-To run all test suites (matching CI):
-`npm test`
+
+In CI, each test suite is executed exactly once without overlap via a single `npm test` step.
+
+To run all test suites locally (matching CI):
+```bash
+npm test
+```
 
 To run the JavaScript test suite:
-`npm run test:js`
+```bash
+npm run test:js
+```
 
 To run the Python test suite:
-`npm run test:py`
+```bash
+npm run test:py
+```
+
