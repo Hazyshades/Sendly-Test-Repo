@@ -12,10 +12,9 @@ export class UploadHttpError extends Error {
 }
 
 /**
- * Evaluates whether an unknown error represents a network or offline failure.
- *
- * @param error - The error or rejection value to inspect.
- * @returns True if the error matches offline or network failure patterns.
+ * Determine whether an error object represents a network/connectivity failure.
+ * Mirrors the heuristics in mapUploadError.cjs so the .ts and .cjs sources
+ * stay in sync.
  */
 export function isNetworkError(error: unknown): boolean {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
@@ -23,20 +22,19 @@ export function isNetworkError(error: unknown): boolean {
   }
 
   if (error && typeof error === 'object') {
-    const errorObj = error as { name?: unknown };
-    if (errorObj.name === 'NetworkError' || errorObj.name === 'OfflineError') {
+    if (
+      (error as { name?: string }).name === 'NetworkError' ||
+      (error as { name?: string }).name === 'OfflineError'
+    ) {
       return true;
     }
   }
 
   if (
     error instanceof Error ||
-    (typeof error === 'object' &&
-      error !== null &&
-      'message' in error &&
-      typeof (error as { message: unknown }).message === 'string')
+    (typeof error === 'object' && error !== null && typeof (error as { message?: unknown }).message === 'string')
   ) {
-    const message = (error as Error).message.toLowerCase();
+    const message = (error as { message: string }).message.toLowerCase();
     const networkPatterns = [
       'failed to fetch',
       'fetch failed',
@@ -64,12 +62,6 @@ export function isNetworkError(error: unknown): boolean {
   return false;
 }
 
-/**
- * Maps an upload error into a friendly, localized user-facing message.
- *
- * @param error - The upload error to map.
- * @returns The friendly error message string.
- */
 export function getFriendlyUploadErrorMessage(error: unknown): string {
   if (
     error instanceof UploadHttpError ||
@@ -88,6 +80,14 @@ export function getFriendlyUploadErrorMessage(error: unknown): string {
   }
 
   if (isNetworkError(error)) {
+    return 'Network error. Please check your connection and try again.';
+  }
+
+  if (error instanceof TypeError && isNetworkError(error)) {
+    return 'Network error. Please check your connection and try again.';
+  }
+
+  if (error instanceof Error && isNetworkError(error)) {
     return 'Network error. Please check your connection and try again.';
   }
 
