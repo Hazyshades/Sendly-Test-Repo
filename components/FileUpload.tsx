@@ -61,21 +61,22 @@ export function FileUpload({
     onUploadError,
   });
 
-  const previews = useMemo<FilePreview[]>(
-    () =>
+  const previews = useMemo<Map<File, string>>(
+    () => {
+      const map = new Map<File, string>();
       selectedFiles
         .filter((file) => file.type.startsWith('image/'))
-        .map((file, index) => ({
-          id: `${file.name}-${file.lastModified}-${index}`,
-          file,
-          url: URL.createObjectURL(file),
-        })),
+        .forEach((file) => {
+          map.set(file, URL.createObjectURL(file));
+        });
+      return map;
+    },
     [selectedFiles],
   );
 
   useEffect(() => {
     return () => {
-      previews.forEach(({ url }) => {
+      previews.forEach((url) => {
         URL.revokeObjectURL(url);
       });
     };
@@ -105,12 +106,12 @@ export function FileUpload({
         </p>
       )}
       {selectedFiles.map((file, index) => {
-        const preview = previews.find((p) => p.file === file);
+        const url = previews.get(file);
         return (
           <div key={`${file.name}-${file.lastModified}-${index}`}>
-            {preview && (
+            {url && (
               <img
-                src={preview.url}
+                src={url}
                 alt={`Preview of ${file.name}`}
                 style={{ width: 100, height: 100, objectFit: 'cover' }}
               />
