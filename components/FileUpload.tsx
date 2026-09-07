@@ -15,6 +15,15 @@ export interface FileUploadProps {
 }
 
 /**
+ * Pairing of a selected file with its generated object URL preview.
+ */
+export interface FilePreview {
+  id: string;
+  file: File;
+  url: string;
+}
+
+/**
  * File upload user interface component delegating selection and upload logic to useFileUpload.
  *
  * @param props Configuration options and event callbacks for file upload.
@@ -52,20 +61,22 @@ export function FileUpload({
     onUploadError,
   });
 
-  const previews = useMemo(() => {
-    const previewMap = new Map<File, string>();
-    selectedFiles.forEach((file) => {
-      if (file.type.startsWith('image/')) {
-        previewMap.set(file, URL.createObjectURL(file));
-      }
-    });
-    return previewMap;
-  }, [selectedFiles]);
+  const previews = useMemo<FilePreview[]>(
+    () =>
+      selectedFiles
+        .filter((file) => file.type.startsWith('image/'))
+        .map((file, index) => ({
+          id: `${file.name}-${file.lastModified}-${index}`,
+          file,
+          url: URL.createObjectURL(file),
+        })),
+    [selectedFiles],
+  );
 
   useEffect(() => {
     return () => {
-      Object.values(previews).forEach((url) => {
-        if (url) URL.revokeObjectURL(url);
+      previews.forEach(({ url }) => {
+        URL.revokeObjectURL(url);
       });
     };
   }, [previews]);
@@ -94,12 +105,12 @@ export function FileUpload({
         </p>
       )}
       {selectedFiles.map((file, index) => {
-        const previewUrl = previews.get(file);
+        const preview = previews.find((p) => p.file === file);
         return (
           <div key={`${file.name}-${file.lastModified}-${index}`}>
-            {previewUrl && (
+            {preview && (
               <img
-                src={previewUrl}
+                src={preview.url}
                 alt={`Preview of ${file.name}`}
                 style={{ width: 100, height: 100, objectFit: 'cover' }}
               />
