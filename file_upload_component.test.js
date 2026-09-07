@@ -27,6 +27,6 @@ test('useFileUpload keeps image preview URL cleanup', () => {
 
 test('FileUpload binds preview URLs to individual files and avoids index mismatch', () => {
   assert.doesNotMatch(source, /previews\[index\]/);
-  assert.match(source, /previews\.find\(/);
+  assert.match(source, /previews\.get\(/);
 });
 
