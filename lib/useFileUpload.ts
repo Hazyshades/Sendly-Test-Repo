@@ -24,7 +24,7 @@ export interface UseFileUploadOptions {
 export interface UseFileUploadReturn {
   file: File | null;
   selectedFiles: File[];
-  previews: string[];
+  previews: Map<File, string>;
   isUploading: boolean;
   message: string | null;
   error: string | null;
@@ -75,6 +75,9 @@ export function isAcceptedFile(file: File, accept?: string): boolean {
 /**
  * Shared upload hook: selection, validation, previews, re-entry guards,
  * abort-on-unmount, and multipart upload with friendly error mapping.
+ *
+ * @param options Configuration options and callbacks for file upload.
+ * @returns Hook state including selected files, image preview map, status, and handlers.
  */
 export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUploadReturn {
   const {
@@ -94,7 +97,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
   const [isUploading, setIsUploading] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [previews, setPreviews] = useState<string[]>([]);
+  const [previews, setPreviews] = useState<Map<File, string>>(new Map());
 
   const inputRef = useRef<HTMLInputElement>(null);
   const uploadingRef = useRef(false);
@@ -105,7 +108,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
   const file = selectedFiles[0] ?? null;
 
   useEffect(() => {
-    previewsRef.current = previews;
+    previewsRef.current = Array.from(previews.values());
   }, [previews]);
 
   useEffect(() => {
@@ -132,7 +135,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
           URL.revokeObjectURL(url);
         }
       });
-      return [];
+      return new Map();
     });
     previewsRef.current = [];
     setMessage(null);
@@ -157,13 +160,13 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     });
     previewsRef.current = [];
     setSelectedFiles(files);
-    const newPreviews = files.map((file) => {
+    const newPreviews = new Map<File, string>();
+    files.forEach((file) => {
       if (file.type.startsWith('image/')) {
-        return URL.createObjectURL(file);
+        newPreviews.set(file, URL.createObjectURL(file));
       }
-      return '';
     });
-    previewsRef.current = newPreviews;
+    previewsRef.current = Array.from(newPreviews.values());
     setPreviews(newPreviews);
     setMessage(null);
     setError(null);
@@ -209,11 +212,11 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       });
       previewsRef.current = [];
 
-      const newPreviews = validFiles.map((file) => {
+      const newPreviews = new Map<File, string>();
+      validFiles.forEach((file) => {
         if (file.type.startsWith('image/')) {
-          return URL.createObjectURL(file);
+          newPreviews.set(file, URL.createObjectURL(file));
         }
-        return '';
       });
 
       setSelectedFiles(validFiles);
@@ -223,7 +226,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
           : null,
       );
 
-      previewsRef.current = newPreviews;
+      previewsRef.current = Array.from(newPreviews.values());
       setPreviews(newPreviews);
       onFilesSelected?.(validFiles);
     },
