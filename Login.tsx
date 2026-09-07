@@ -71,7 +71,13 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
         type="file"
         onChange={handleFileChange}
         disabled={isUploading}
-        aria-describedby="login-upload-status login-upload-error"
+        aria-describedby={
+          error
+            ? "login-upload-error"
+            : message
+              ? "login-upload-status"
+              : undefined
+        }
       />
       <button
         type="button"
@@ -80,8 +86,16 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
       >
         {isUploading ? "Uploading..." : "Upload"}
       </button>
-      {message && <p role="status">{message}</p>}
-      {error && <p role="alert">{error}</p>}
+      {message && (
+        <p id="login-upload-status" role="status">
+          {message}
+        </p>
+      )}
+      {error && (
+        <p id="login-upload-error" role="alert">
+          {error}
+        </p>
+      )}
     </div>
   );
 };

@@ -53,6 +53,18 @@ test('Login file input is enabled on fresh mount and only disabled during upload
   assert.match(source, /<input[\s\S]*?disabled=\{isUploading\}/);
 });
 
+test('Login only describes status and error nodes that are currently rendered', () => {
+  assert.match(source, /<p id="login-upload-status" role="status">/);
+  assert.match(source, /<p id="login-upload-error" role="alert">/);
+  assert.match(
+    source,
+    /aria-describedby=\{[\s\S]*?error[\s\S]*?"login-upload-error"[\s\S]*?message[\s\S]*?"login-upload-status"[\s\S]*?: undefined[\s\S]*?\}/,
+  );
+  assert.doesNotMatch(source, /aria-describedby="login-upload-status login-upload-error"/);
+  assert.match(source, /<label htmlFor="login-file-input">/);
+  assert.match(source, /<input[\s\S]*?id="login-file-input"/);
+});
+
 test('Login upload uses a configurable endpoint via the shared hook', () => {
   assert.match(source, /uploadUrl\?\s*:\s*string/);
   assert.match(source, /uploadUrl = getDefaultUploadUrl\(\)/);
