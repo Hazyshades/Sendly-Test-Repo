@@ -30,7 +30,7 @@ npm run typecheck
 npm test
 ```
 
-`npm test` runs both the JavaScript test runner (`npm run test:js` via `node --test`) and the Python CLI test suite (`npm run test:py` via `python3 -m unittest test_fix.py`).
+`npm test` runs both the JavaScript test runner (`npm run test:js` via `node --test`) and the Python CLI test suite (`npm run test:py` via `node run_test_py.js -m unittest test_fix.py`).
 
 ### Test Suites
 
