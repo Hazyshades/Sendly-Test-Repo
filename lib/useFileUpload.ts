@@ -139,7 +139,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
   }, []);
 
   // Check if file matches accept filter
-  const isAcceptedFile = useCallback((file: File, acceptFilter: string): boolean => {
+  const isAcceptedFile = useCallback((file: File, acceptFilter?: string): boolean => {
     if (!acceptFilter || acceptFilter === '*/*') return true;
     const accepted = acceptFilter.split(',').map(s => s.trim().toLowerCase());
     const fileType = file.type.toLowerCase();
