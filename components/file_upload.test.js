@@ -50,3 +50,8 @@ test('FileUpload has valid a11y attributes without duplicate id or aria-describe
   assert.match(source, /<p\s+id="file-upload-error"\s+role="alert"/);
   assert.match(source, /<p\s+id="file-upload-status"\s+role="status"/);
 });
+
+test('FileUpload ties preview URLs to matching files and does not assign URLs to non-image files', () => {
+  assert.match(source, /previews\.get\(file\)/);
+  assert.doesNotMatch(source, /previews\[index\]/);
+});

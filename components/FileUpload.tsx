@@ -52,16 +52,15 @@ export function FileUpload({
     onUploadError,
   });
 
-  const previews = useMemo(
-    () =>
-      Object.fromEntries(
-        selectedFiles.map((file) => [
-          \-\,
-          file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
-        ]),
-      ),
-    [selectedFiles],
-  );
+  const previews = useMemo(() => {
+    const previewMap = new Map<File, string>();
+    selectedFiles.forEach((file) => {
+      if (file.type.startsWith('image/')) {
+        previewMap.set(file, URL.createObjectURL(file));
+      }
+    });
+    return previewMap;
+  }, [selectedFiles]);
 
   useEffect(() => {
     return () => {
@@ -94,18 +93,21 @@ export function FileUpload({
           {message}
         </p>
       )}
-      {selectedFiles.map((file, index) => (
-        <div key={`${file.name}-${file.lastModified}-${index}`}>
-          {previews[index] && (
-            <img
-              src={previews[index]}
-              alt={`Preview of ${file.name}`}
-              style={{ width: 100, height: 100, objectFit: 'cover' }}
-            />
-          )}
-          <span>{file.name}</span>
-        </div>
-      ))}
+      {selectedFiles.map((file, index) => {
+        const previewUrl = previews.get(file);
+        return (
+          <div key={`${file.name}-${file.lastModified}-${index}`}>
+            {previewUrl && (
+              <img
+                src={previewUrl}
+                alt={`Preview of ${file.name}`}
+                style={{ width: 100, height: 100, objectFit: 'cover' }}
+              />
+            )}
+            <span>{file.name}</span>
+          </div>
+        );
+      })}
       {selectedFiles.length > 0 && (
         <>
           <button
