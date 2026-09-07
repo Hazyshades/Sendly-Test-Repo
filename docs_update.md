@@ -1,3 +1,3 @@
-# Documentation & Reference for Issue #427
+# Documentation & Reference for Issue #425
 
-Resolved autonomous update for '[Bug] fix.py has dead code and inconsistent exit handling after validation'.
+Resolved autonomous update for '[Bug] Duplicate type declarations mapUploadError.d.ts and mapUploadError.d.cts'.
