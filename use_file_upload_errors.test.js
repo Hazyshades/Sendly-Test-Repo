@@ -135,3 +135,43 @@ test('useFileUpload source adheres to error handling contract', () => {
   // Preserves full technical error in console.error
   assert.match(hookSource, /console\.error\('Upload error:', uploadError\)/);
 });
+
+test('mapUploadError.ts and mapUploadError.cjs share unified heuristics and export parity', () => {
+  const cjs = require('./lib/mapUploadError.cjs');
+  const ts = require('./lib/mapUploadError.ts');
+
+  assert.equal(typeof cjs.isNetworkError, 'function');
+  assert.equal(typeof ts.isNetworkError, 'function');
+  assert.equal(typeof cjs.getFriendlyUploadErrorMessage, 'function');
+  assert.equal(typeof ts.getFriendlyUploadErrorMessage, 'function');
+  assert.equal(typeof cjs.UploadHttpError, 'function');
+  assert.equal(typeof ts.UploadHttpError, 'function');
+
+  const testCases = [
+    new TypeError('Unexpected token < in JSON'),
+    new TypeError('Cannot read properties of undefined'),
+    new SyntaxError('Unexpected token < in JSON'),
+    new Error('Network error'),
+    new TypeError('Failed to fetch'),
+    new Error('Client is offline'),
+    new cjs.UploadHttpError(404),
+    new ts.UploadHttpError(500),
+    'some string error',
+    null,
+    undefined,
+  ];
+
+  for (const tc of testCases) {
+    assert.equal(
+      ts.isNetworkError(tc),
+      cjs.isNetworkError(tc),
+      `isNetworkError parity failed for ${tc}`,
+    );
+    assert.equal(
+      ts.getFriendlyUploadErrorMessage(tc),
+      cjs.getFriendlyUploadErrorMessage(tc),
+      `getFriendlyUploadErrorMessage parity failed for ${tc}`,
+    );
+  }
+});
+

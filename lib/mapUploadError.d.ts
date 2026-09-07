@@ -3,6 +3,7 @@ export declare class UploadHttpError extends Error {
   constructor(status: number);
 }
 
+export declare function isNetworkError(error: unknown): boolean;
 export declare function getFriendlyUploadErrorMessage(error: unknown): string;
 
 declare module './mapUploadError.cjs' {
@@ -11,5 +12,6 @@ declare module './mapUploadError.cjs' {
     constructor(status: number);
   }
 
+  export function isNetworkError(error: unknown): boolean;
   export function getFriendlyUploadErrorMessage(error: unknown): string;
 }
