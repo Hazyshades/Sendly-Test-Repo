@@ -63,3 +63,11 @@ test('runtime file selection uses top-level isAcceptedFile helper', () => {
     /selectFiles[\s\S]*?\[[^\]]*\bisAcceptedFile\b[^\]]*\]/
   );
 });
+
+test('selectFiles dependency array includes every value and callback it closes over', () => {
+  assert.match(
+    hookSource,
+    /selectFiles\s*=\s*useCallback\([\s\S]*?\[\s*accept,\s*clearSelection,\s*emptySelectionMessage,\s*maxSizeMB,\s*onFilesSelected\s*\]/
+  );
+});
+

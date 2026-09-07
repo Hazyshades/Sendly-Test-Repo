@@ -83,13 +83,5 @@ export function getFriendlyUploadErrorMessage(error: unknown): string {
     return 'Network error. Please check your connection and try again.';
   }
 
-  if (error instanceof TypeError && isNetworkError(error)) {
-    return 'Network error. Please check your connection and try again.';
-  }
-
-  if (error instanceof Error && isNetworkError(error)) {
-    return 'Network error. Please check your connection and try again.';
-  }
-
   return 'Upload failed. Please try again.';
 }
