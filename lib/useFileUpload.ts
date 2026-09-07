@@ -116,6 +116,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
           URL.revokeObjectURL(url);
         }
       });
+      previewsRef.current = [];
     };
   }, []);
 
@@ -133,6 +134,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       });
       return [];
     });
+    previewsRef.current = [];
     setMessage(null);
     setError(null);
     setIsUploading(false);
@@ -161,6 +163,12 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
   const commitSelection = useCallback((files: File[]) => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    previewsRef.current.forEach((url) => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    });
+    previewsRef.current = [];
     setSelectedFiles(files);
     const newPreviews = files.map((file) => {
       if (file.type.startsWith('image/')) {
@@ -168,6 +176,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       }
       return '';
     });
+    previewsRef.current = newPreviews;
     setPreviews(newPreviews);
     setMessage(null);
     setError(null);
@@ -206,6 +215,13 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
         return;
       }
 
+      previewsRef.current.forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
+      previewsRef.current = [];
+
       const newPreviews = validFiles.map((file) => {
         if (file.type.startsWith('image/')) {
           return URL.createObjectURL(file);
@@ -220,6 +236,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
           : null,
       );
 
+      previewsRef.current = newPreviews;
       setPreviews(newPreviews);
       onFilesSelected?.(validFiles);
     },
