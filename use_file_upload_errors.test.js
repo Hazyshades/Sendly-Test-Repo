@@ -137,8 +137,24 @@ test('useFileUpload source adheres to error handling contract', () => {
 });
 
 test('mapUploadError.ts and mapUploadError.cjs share unified heuristics and export parity', () => {
+  const tsSource = readFileSync('lib/mapUploadError.ts', 'utf8');
+  assert.doesNotMatch(tsSource, /error\s+instanceof\s+TypeError/);
+  assert.doesNotMatch(tsSource, /message\.includes\(['"]network['"]\)/);
+
   const cjs = require('./lib/mapUploadError.cjs');
-  const ts = require('./lib/mapUploadError.ts');
+  let ts;
+  try {
+    ts = require('./lib/mapUploadError.ts');
+  } catch {
+    const typescript = require('typescript');
+    const trans = typescript.transpileModule(tsSource, {
+      compilerOptions: { module: typescript.ModuleKind.CommonJS },
+    });
+    const mod = { exports: {} };
+    const fn = new Function('exports', 'module', 'require', trans.outputText);
+    fn(mod.exports, mod, require);
+    ts = mod.exports;
+  }
 
   assert.equal(typeof cjs.isNetworkError, 'function');
   assert.equal(typeof ts.isNetworkError, 'function');
