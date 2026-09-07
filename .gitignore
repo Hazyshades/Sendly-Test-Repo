@@ -4,6 +4,9 @@ node_modules/
 SOLUTION_ISSUE_*.md
 AGENTCLAW_*
 .serena/
+github-*
+NEX_AGENT_*
+docs_update.md
 
 # Scanner runs and ephemeral artifacts
 strix_runs/
