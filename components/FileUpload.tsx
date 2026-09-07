@@ -54,16 +54,19 @@ export function FileUpload({
 
   const previews = useMemo(
     () =>
-      selectedFiles
-        .filter((file) => file.type.startsWith('image/'))
-        .map((file) => URL.createObjectURL(file)),
+      Object.fromEntries(
+        selectedFiles.map((file) => [
+          \-\,
+          file.type.startsWith('image/') ? URL.createObjectURL(file) : null,
+        ]),
+      ),
     [selectedFiles],
   );
 
   useEffect(() => {
     return () => {
-      previews.forEach((url) => {
-        URL.revokeObjectURL(url);
+      Object.values(previews).forEach((url) => {
+        if (url) URL.revokeObjectURL(url);
       });
     };
   }, [previews]);
