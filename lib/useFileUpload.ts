@@ -199,6 +199,94 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     clearSelection();
   }, [clearSelection]);
 
+  const commitSelection = useCallback((files: File[]) => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    previewsRef.current.forEach((url) => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    });
+    setSelectedFiles(files);
+    const newPreviews = files.map((file) => {
+      if (file.type.startsWith('image/')) {
+        return URL.createObjectURL(file);
+      }
+      return '';
+    });
+    setPreviews(newPreviews);
+    setMessage(null);
+    setError(null);
+  }, []);
+
+  const selectFiles = useCallback(
+    (files: File[]) => {
+      const maxBytes = maxSizeMB * 1024 * 1024;
+      const validFiles: File[] = [];
+      const invalidFileNames: string[] = [];
+
+      for (const file of files) {
+        if (!isAcceptedFile(file, accept)) {
+          invalidFileNames.push(file.name);
+          continue;
+        }
+        if (file.size > maxBytes) {
+          invalidFileNames.push(file.name);
+          continue;
+        }
+
+        validFiles.push(file);
+      }
+
+      setMessage(null);
+
+      if (validFiles.length === 0) {
+        clearSelection();
+        setError(
+          invalidFileNames.length > 0
+            ? `File${invalidFileNames.length === 1 ? '' : 's'} "${invalidFileNames.join(', ')}" exceed${
+                invalidFileNames.length === 1 ? 's' : ''
+              } ${maxSizeMB}MB limit.`
+            : emptySelectionMessage,
+        );
+        return;
+      }
+
+      previewsRef.current.forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
+
+      const newPreviews = validFiles.map((file) => {
+        if (file.type.startsWith('image/')) {
+          return URL.createObjectURL(file);
+        }
+        return '';
+      });
+
+      setSelectedFiles(validFiles);
+      setError(
+        invalidFileNames.length > 0
+          ? `Skipped oversized or unaccepted file${invalidFileNames.length === 1 ? '' : 's'}: ${invalidFileNames.join(', ')}.`
+          : null,
+      );
+
+      setPreviews(newPreviews);
+      onFilesSelected?.(validFiles);
+    },
+    [accept, clearSelection, emptySelectionMessage, maxSizeMB, onFilesSelected],
+  );
+
+  const handleFileChange = useCallback(
+    (event: ChangeEvent<HTMLInputElement>) => {
+      const rawFiles = Array.from(event.target.files ?? []);
+      const files = multiple ? rawFiles : rawFiles.slice(0, 1);
+      selectFiles(files);
+    },
+    [multiple, selectFiles],
+  );
+
   const handleUpload = useCallback(async () => {
     if (uploadingRef.current || uploadInFlightRef.current) {
       return;
