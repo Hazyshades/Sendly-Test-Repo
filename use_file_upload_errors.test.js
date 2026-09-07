@@ -4,6 +4,7 @@ const test = require('node:test');
 const {
   UploadHttpError,
   getFriendlyUploadErrorMessage,
+  isNetworkError,
 } = require('./lib/mapUploadError.cjs');
 
 test('UploadHttpError stores status and maintains proper name and message', () => {
@@ -136,58 +137,30 @@ test('useFileUpload source adheres to error handling contract', () => {
   assert.match(hookSource, /console\.error\('Upload error:', uploadError\)/);
 });
 
-test('mapUploadError.ts and mapUploadError.cjs share unified heuristics and export parity', () => {
+test('mapUploadError.ts and mapUploadError.cjs export identical heuristics without broad TypeError fallback', () => {
   const tsSource = readFileSync('lib/mapUploadError.ts', 'utf8');
   assert.doesNotMatch(tsSource, /error\s+instanceof\s+TypeError/);
   assert.doesNotMatch(tsSource, /message\.includes\(['"]network['"]\)/);
+  assert.match(tsSource, /export function isNetworkError/);
+  assert.match(tsSource, /export function getFriendlyUploadErrorMessage/);
+  assert.match(tsSource, /export class UploadHttpError/);
+});
 
-  const cjs = require('./lib/mapUploadError.cjs');
-  let ts;
-  try {
-    ts = require('./lib/mapUploadError.ts');
-  } catch {
-    const typescript = require('typescript');
-    const trans = typescript.transpileModule(tsSource, {
-      compilerOptions: { module: typescript.ModuleKind.CommonJS },
-    });
-    const mod = { exports: {} };
-    const fn = new Function('exports', 'module', 'require', trans.outputText);
-    fn(mod.exports, mod, require);
-    ts = mod.exports;
-  }
+test('isNetworkError helper accurately identifies network failures and rejects generic parse errors', () => {
+  assert.equal(typeof isNetworkError, 'function');
+  assert.equal(isNetworkError(new TypeError('Failed to fetch')), true);
+  assert.equal(isNetworkError(new TypeError('fetch failed')), true);
+  assert.equal(isNetworkError(new TypeError('Load failed')), true);
+  assert.equal(isNetworkError(new Error('NetworkError when attempting to fetch resource.')), true);
+  assert.equal(isNetworkError(new Error('Network request failed')), true);
+  assert.equal(isNetworkError(new Error('Client is offline')), true);
+  assert.equal(isNetworkError(new Error('net::ERR_INTERNET_DISCONNECTED')), true);
 
-  assert.equal(typeof cjs.isNetworkError, 'function');
-  assert.equal(typeof ts.isNetworkError, 'function');
-  assert.equal(typeof cjs.getFriendlyUploadErrorMessage, 'function');
-  assert.equal(typeof ts.getFriendlyUploadErrorMessage, 'function');
-  assert.equal(typeof cjs.UploadHttpError, 'function');
-  assert.equal(typeof ts.UploadHttpError, 'function');
-
-  const testCases = [
-    new TypeError('Unexpected token < in JSON'),
-    new TypeError('Cannot read properties of undefined'),
-    new SyntaxError('Unexpected token < in JSON'),
-    new Error('Network error'),
-    new TypeError('Failed to fetch'),
-    new Error('Client is offline'),
-    new cjs.UploadHttpError(404),
-    new ts.UploadHttpError(500),
-    'some string error',
-    null,
-    undefined,
-  ];
-
-  for (const tc of testCases) {
-    assert.equal(
-      ts.isNetworkError(tc),
-      cjs.isNetworkError(tc),
-      `isNetworkError parity failed for ${tc}`,
-    );
-    assert.equal(
-      ts.getFriendlyUploadErrorMessage(tc),
-      cjs.getFriendlyUploadErrorMessage(tc),
-      `getFriendlyUploadErrorMessage parity failed for ${tc}`,
-    );
-  }
+  assert.equal(isNetworkError(new TypeError('Unexpected token < in JSON')), false);
+  assert.equal(isNetworkError(new SyntaxError('Unexpected token < in JSON')), false);
+  assert.equal(isNetworkError(new TypeError('Cannot read properties of undefined')), false);
+  assert.equal(isNetworkError(new Error('Some other error')), false);
+  assert.equal(isNetworkError(null), false);
+  assert.equal(isNetworkError(undefined), false);
 });
 

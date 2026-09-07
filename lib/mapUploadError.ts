@@ -1,3 +1,6 @@
+/**
+ * Error subclass carrying an HTTP status code for upload responses.
+ */
 export class UploadHttpError extends Error {
   readonly status: number;
 
@@ -8,14 +11,20 @@ export class UploadHttpError extends Error {
   }
 }
 
+/**
+ * Evaluates whether an unknown error represents a network or offline failure.
+ *
+ * @param error - The error or rejection value to inspect.
+ * @returns True if the error matches offline or network failure patterns.
+ */
 export function isNetworkError(error: unknown): boolean {
   if (typeof navigator !== 'undefined' && navigator.onLine === false) {
     return true;
   }
 
   if (error && typeof error === 'object') {
-    const errObj = error as { name?: unknown };
-    if (errObj.name === 'NetworkError' || errObj.name === 'OfflineError') {
+    const errorObj = error as { name?: unknown };
+    if (errorObj.name === 'NetworkError' || errorObj.name === 'OfflineError') {
       return true;
     }
   }
@@ -24,9 +33,10 @@ export function isNetworkError(error: unknown): boolean {
     error instanceof Error ||
     (typeof error === 'object' &&
       error !== null &&
-      typeof (error as { message?: unknown }).message === 'string')
+      'message' in error &&
+      typeof (error as { message: unknown }).message === 'string')
   ) {
-    const message = (error as { message: string }).message.toLowerCase();
+    const message = (error as Error).message.toLowerCase();
     const networkPatterns = [
       'failed to fetch',
       'fetch failed',
@@ -54,6 +64,12 @@ export function isNetworkError(error: unknown): boolean {
   return false;
 }
 
+/**
+ * Maps an upload error into a friendly, localized user-facing message.
+ *
+ * @param error - The upload error to map.
+ * @returns The friendly error message string.
+ */
 export function getFriendlyUploadErrorMessage(error: unknown): string {
   if (
     error instanceof UploadHttpError ||
