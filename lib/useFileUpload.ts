@@ -141,6 +141,19 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     }
   }, []);
 
+  // Check if file matches accept filter
+  const isAcceptedFile = useCallback((file: File, acceptFilter?: string): boolean => {
+    if (!acceptFilter || acceptFilter === '*/*') return true;
+    const accepted = acceptFilter.split(',').map(s => s.trim().toLowerCase());
+    const fileType = file.type.toLowerCase();
+    const fileName = file.name.toLowerCase();
+    return accepted.some(a => {
+      if (a.startsWith('.')) return fileName.endsWith(a);
+      if (a.endsWith('/*')) return fileType.startsWith(a.replace('/*', '/'));
+      return fileType === a;
+    });
+  }, []);
+
   const resetSelection = useCallback(() => {
     clearSelection();
   }, [clearSelection]);
@@ -230,6 +243,10 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
     }
 
     if (uploadingRef.current) {
+      return;
+    }
+
+    if (uploadInFlightRef.current) {
       return;
     }
     uploadingRef.current = true;
