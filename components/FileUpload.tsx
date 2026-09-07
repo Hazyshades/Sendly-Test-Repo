@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { useFileUpload } from '../lib/useFileUpload';
 
 /**
@@ -36,7 +35,7 @@ export function FileUpload({
     inputRef,
     uploadingRef,
     selectedFiles,
-    previews: hookPreviews,
+    previews,
     handleFileChange,
     handleUpload,
     clearSelection,
@@ -52,17 +51,6 @@ export function FileUpload({
     onUploadSuccess,
     onUploadError,
   });
-
-  const previews = useMemo(() => {
-    const previewMap = new Map<File, string>();
-    selectedFiles.forEach((file, index) => {
-      const url = hookPreviews[index];
-      if (url && file.type.startsWith('image/')) {
-        previewMap.set(file, url);
-      }
-    });
-    return previewMap;
-  }, [selectedFiles, hookPreviews]);
 
   return (
     <div>

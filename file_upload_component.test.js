@@ -52,3 +52,13 @@ test('clearSelection and unmount safely clean up preview URLs without double-rev
   );
 });
 
+test('useFileUpload types previews as Map<File, string> and avoids index-coupled string array', () => {
+  assert.match(hookSource, /previews:\s*Map<File,\s*string>/);
+  assert.doesNotMatch(hookSource, /previews:\s*string\[\]/);
+  assert.doesNotMatch(hookSource, /useState<string\[\]>\(\[\]\)/);
+});
+
+test('FileUpload consumes previews Map directly without index mapping', () => {
+  assert.match(source, /previews,\s*\n\s*handleFileChange/);
+  assert.doesNotMatch(source, /hookPreviews/);
+});
