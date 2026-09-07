@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import { useMemo } from 'react';
 import { useFileUpload } from '../lib/useFileUpload';
 
 /**
@@ -12,15 +12,6 @@ export interface FileUploadProps {
   onFilesSelected?: (files: File[]) => void;
   onUploadSuccess?: () => void;
   onUploadError?: (message: string) => void;
-}
-
-/**
- * Pairing of a selected file with its generated object URL preview.
- */
-export interface FilePreview {
-  id: string;
-  file: File;
-  url: string;
 }
 
 /**
@@ -45,6 +36,7 @@ export function FileUpload({
     inputRef,
     uploadingRef,
     selectedFiles,
+    previews: hookPreviews,
     handleFileChange,
     handleUpload,
     clearSelection,
@@ -61,25 +53,16 @@ export function FileUpload({
     onUploadError,
   });
 
-  const previews = useMemo<FilePreview[]>(
-    () =>
-      selectedFiles
-        .filter((file) => file.type.startsWith('image/'))
-        .map((file, index) => ({
-          id: `${file.name}-${file.lastModified}-${index}`,
-          file,
-          url: URL.createObjectURL(file),
-        })),
-    [selectedFiles],
-  );
-
-  useEffect(() => {
-    return () => {
-      previews.forEach(({ url }) => {
-        URL.revokeObjectURL(url);
-      });
-    };
-  }, [previews]);
+  const previews = useMemo(() => {
+    const previewMap = new Map<File, string>();
+    selectedFiles.forEach((file, index) => {
+      const url = hookPreviews[index];
+      if (url && file.type.startsWith('image/')) {
+        previewMap.set(file, url);
+      }
+    });
+    return previewMap;
+  }, [selectedFiles, hookPreviews]);
 
   return (
     <div>
@@ -105,12 +88,12 @@ export function FileUpload({
         </p>
       )}
       {selectedFiles.map((file, index) => {
-        const preview = previews.find((p) => p.file === file);
+        const previewUrl = previews.get(file);
         return (
           <div key={`${file.name}-${file.lastModified}-${index}`}>
-            {preview && (
+            {previewUrl && (
               <img
-                src={preview.url}
+                src={previewUrl}
                 alt={`Preview of ${file.name}`}
                 style={{ width: 100, height: 100, objectFit: 'cover' }}
               />

@@ -6,9 +6,9 @@ const { assertValidationContract } = require('./components/file_upload_contract.
 const source = readFileSync('components/FileUpload.tsx', 'utf8');
 const hookSource = readFileSync('lib/useFileUpload.ts', 'utf8');
 
-test('FileUpload keeps image preview URL cleanup', () => {
-  assert.match(source, /URL\.createObjectURL\(file\)/);
-  assert.match(source, /URL\.revokeObjectURL\(url\)/);
+test('FileUpload does not duplicate preview creation and revocation', () => {
+  assert.doesNotMatch(source, /URL\.createObjectURL/);
+  assert.doesNotMatch(source, /URL\.revokeObjectURL/);
 });
 
 test('preview creation and revocation are owned by the shared hook', () => {
@@ -27,6 +27,6 @@ test('useFileUpload keeps image preview URL cleanup', () => {
 
 test('FileUpload binds preview URLs to individual files and avoids index mismatch', () => {
   assert.doesNotMatch(source, /previews\[index\]/);
-  assert.match(source, /previews\.find\(/);
+  assert.match(source, /previews\.get\(/);
 });
 

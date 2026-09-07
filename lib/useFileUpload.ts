@@ -159,6 +159,11 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
   const commitSelection = useCallback((files: File[]) => {
     abortControllerRef.current?.abort();
     abortControllerRef.current = null;
+    previewsRef.current.forEach((url) => {
+      if (url) {
+        URL.revokeObjectURL(url);
+      }
+    });
     setSelectedFiles(files);
     const newPreviews = files.map((file) => {
       if (file.type.startsWith('image/')) {
@@ -203,6 +208,12 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
         );
         return;
       }
+
+      previewsRef.current.forEach((url) => {
+        if (url) {
+          URL.revokeObjectURL(url);
+        }
+      });
 
       const newPreviews = validFiles.map((file) => {
         if (file.type.startsWith('image/')) {
