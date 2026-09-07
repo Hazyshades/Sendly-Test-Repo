@@ -49,3 +49,31 @@ test('repo contains the previously omitted JS and Python suites', () => {
   assert.ok(discovered.includes('file_upload_component.test.js'));
   assert.ok(discovered.includes('test_suite_wiring.test.js'));
 });
+
+test('test:py does not chain commands via fallback || operator', () => {
+  const pkg = JSON.parse(readFileSync('package.json', 'utf8'));
+
+  assert.ok(!pkg.scripts['test:py'].includes('||'));
+});
+
+test('run_test_py launcher exits non-zero on test failures without re-running', () => {
+  const { spawnSync } = require('node:child_process');
+  const result = spawnSync(process.execPath, ['run_test_py.js', '-m', 'unittest', 'nonexistent_test_module'], {
+    encoding: 'utf8',
+  });
+
+  assert.notEqual(result.status, 0);
+  const errorCount = (result.stderr.match(/ModuleNotFoundError/g) || []).length;
+  assert.equal(errorCount, 1);
+});
+
+test('run_test_py launcher provides a clear diagnostic error when interpreter is missing', () => {
+  const { spawnSync } = require('node:child_process');
+  const result = spawnSync(process.execPath, ['run_test_py.js'], {
+    env: { ...process.env, PATH: '' },
+    encoding: 'utf8',
+  });
+
+  assert.notEqual(result.status, 0);
+  assert.match(result.stderr, /Error: Python interpreter not found/);
+});
