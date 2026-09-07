@@ -240,7 +240,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
       setPreviews(newPreviews);
       onFilesSelected?.(validFiles);
     },
-    [accept, clearSelection, emptySelectionMessage, maxSizeMB, onFilesSelected],
+    [accept, clearSelection, emptySelectionMessage, isAcceptedFile, maxSizeMB, onFilesSelected],
   );
 
   const handleFileChange = useCallback(
