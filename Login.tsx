@@ -70,7 +70,7 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
         ref={inputRef}
         type="file"
         onChange={handleFileChange}
-        disabled={isUploading /* disabled={!file || isUploading} */}
+        disabled={isUploading}
         aria-describedby="login-upload-status login-upload-error"
       />
       <button
