@@ -1,3 +1,3 @@
-# Documentation & Reference for Issue #430
+# Documentation & Reference for Issue #428
 
-Resolved autonomous update for '[Bug] FileUpload aria-describedby drops the other live region when both error and message exist'.
+Resolved autonomous update for '[Bug] useFileUpload imports/re-exports isNetworkError but never uses it'.
