@@ -30,7 +30,7 @@ npm run typecheck
 npm test
 ```
 
-`npm test` runs both the JavaScript test runner (`npm run test:js` via `node --test`) and the Python CLI test suite (`npm run test:py` via `python3 -m unittest test_fix -v`).
+`npm test` runs both the JavaScript test runner (`npm run test:js` via `node --test`) and the Python CLI test suite (`npm run test:py` via `python3 -m unittest test_fix -v`). A failure in either the JavaScript or Python test suite will immediately return a non-zero exit code, ensuring CI and local runners fail red.
 
 ### Test Suites
 
@@ -48,12 +48,6 @@ node --test
 - `use_file_upload_errors.test.js`
 - `test_suite_wiring.test.js`
 - `components/file_upload.test.js`
-- `double_submit_race.test.js`
-- `file_upload_component.test.js`
-- `login_upload.test.js`
-- `test_suite_wiring.test.js`
-- `upload_file.test.js`
-- `use_file_upload_errors.test.js`
 
 #### Python CLI Suite
 Runs the Python test suite (`test_fix.py`):
@@ -80,8 +74,13 @@ python test_fix.py
    the issue. The bounty is paid in test USDC on ARC Testnet.
 
 ### Running Tests
-To run the JavaScript test suite:
-`npm test`
 
-To run the Python test suite:
-`python3 -m unittest test_fix -v`
+To run all test suites (JavaScript and Python):
+```bash
+npm test
+```
+`npm test` returns a non-zero exit code if any test in either suite fails.
+
+To run individual test suites:
+- JavaScript: `npm run test:js` (or `node --test`)
+- Python: `npm run test:py` (or `python3 -m unittest test_fix.py`)

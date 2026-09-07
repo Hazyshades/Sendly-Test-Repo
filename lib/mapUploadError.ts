@@ -1,3 +1,6 @@
+/**
+ * Error subclass carrying an HTTP status code for upload responses.
+ */
 export class UploadHttpError extends Error {
   readonly status: number;
 
@@ -8,6 +11,65 @@ export class UploadHttpError extends Error {
   }
 }
 
+/**
+ * Evaluates whether an unknown error represents a network or offline failure.
+ *
+ * @param error - The error or rejection value to inspect.
+ * @returns True if the error matches offline or network failure patterns.
+ */
+export function isNetworkError(error: unknown): boolean {
+  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
+    return true;
+  }
+
+  if (error && typeof error === 'object') {
+    const errorObj = error as { name?: unknown };
+    if (errorObj.name === 'NetworkError' || errorObj.name === 'OfflineError') {
+      return true;
+    }
+  }
+
+  if (
+    error instanceof Error ||
+    (typeof error === 'object' &&
+      error !== null &&
+      'message' in error &&
+      typeof (error as { message: unknown }).message === 'string')
+  ) {
+    const message = (error as Error).message.toLowerCase();
+    const networkPatterns = [
+      'failed to fetch',
+      'fetch failed',
+      'load failed',
+      'networkerror',
+      'network error',
+      'network request failed',
+      'network failure',
+      'client is offline',
+      'net::err_',
+      'econnrefused',
+      'enetunreach',
+      'etimedout',
+    ];
+
+    if (networkPatterns.some((pattern) => message.includes(pattern))) {
+      return true;
+    }
+
+    if (/\boffline\b/.test(message)) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+/**
+ * Maps an upload error into a friendly, localized user-facing message.
+ *
+ * @param error - The upload error to map.
+ * @returns The friendly error message string.
+ */
 export function getFriendlyUploadErrorMessage(error: unknown): string {
   if (
     error instanceof UploadHttpError ||
@@ -25,25 +87,8 @@ export function getFriendlyUploadErrorMessage(error: unknown): string {
     }
   }
 
-  if (typeof navigator !== 'undefined' && !navigator.onLine) {
+  if (isNetworkError(error)) {
     return 'Network error. Please check your connection and try again.';
-  }
-
-  if (error instanceof TypeError) {
-    return 'Network error. Please check your connection and try again.';
-  }
-
-  if (error instanceof Error) {
-    const message = error.message.toLowerCase();
-    if (
-      message.includes('failed to fetch') ||
-      message.includes('network') ||
-      message.includes('fetch failed') ||
-      message.includes('load failed') ||
-      message.includes('offline')
-    ) {
-      return 'Network error. Please check your connection and try again.';
-    }
   }
 
   return 'Upload failed. Please try again.';
