@@ -267,13 +267,7 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
 
       const formData = new FormData();
       const fieldName = multiple ? 'files' : 'file';
-      if (multiple) {
-        for (const file of selectedFiles) {
-          formData.append(fieldName, file, file.name);
-        }
-      } else {
-        const file = selectedFiles[0];
-        formData.append('file', file, file.name);
+      for (const file of selectedFiles) {
         formData.append(fieldName, file, file.name);
       }
 

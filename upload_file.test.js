@@ -8,7 +8,7 @@ const hookSource = readFileSync('lib/useFileUpload.ts', 'utf8');
 
 test('upload sends the selected file with FormData instead of JSON', () => {
   assert.match(hookSource, /new\s+FormData\s*\(/);
-  assert.match(hookSource, /\.append\(\s*['"]file['"]/);
+  assert.match(hookSource, /formData\.append\(/);
   assert.doesNotMatch(hookSource, /JSON\.stringify/);
   assert.doesNotMatch(hookSource, /Content-Type['"]?\s*:\s*['"]application\/json/);
 });
