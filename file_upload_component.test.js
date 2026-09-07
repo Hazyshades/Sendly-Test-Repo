@@ -30,3 +30,25 @@ test('FileUpload binds preview URLs to individual files and avoids index mismatc
   assert.match(source, /previews\.get\(/);
 });
 
+test('useFileUpload revokes previous preview URLs before replacing selection or committing', () => {
+  assert.match(
+    hookSource,
+    /commitSelection[\s\S]*?previewsRef\.current\.forEach\(\(url\) => \{[\s\S]*?URL\.revokeObjectURL\(url\)[\s\S]*?setPreviews\(newPreviews\)/,
+  );
+  assert.match(
+    hookSource,
+    /selectFiles[\s\S]*?previewsRef\.current\.forEach\(\(url\) => \{[\s\S]*?URL\.revokeObjectURL\(url\)[\s\S]*?setPreviews\(newPreviews\)/,
+  );
+});
+
+test('clearSelection and unmount safely clean up preview URLs without double-revoking', () => {
+  assert.match(
+    hookSource,
+    /clearSelection[\s\S]*?setPreviews\(\(prev\) => \{[\s\S]*?URL\.revokeObjectURL\(url\)[\s\S]*?previewsRef\.current = \[\]/,
+  );
+  assert.match(
+    hookSource,
+    /return \(\) => \{[\s\S]*?previewsRef\.current\.forEach\(\(url\) => \{[\s\S]*?URL\.revokeObjectURL\(url\)[\s\S]*?previewsRef\.current = \[\]/,
+  );
+});
+
