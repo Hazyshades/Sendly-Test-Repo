@@ -222,12 +222,9 @@ export function useFileUpload(options: UseFileUploadOptions = {}): UseFileUpload
 
     try {
       const formData = new FormData();
-      if (!multiple) {
-        formData.append('file', file, file.name);
-      } else {
-        selectedFiles.forEach((f) => {
-          formData.append('files', f, f.name);
-        });
+      const fieldName = multiple ? 'files' : 'file';
+      for (const file of selectedFiles) {
+        formData.append(fieldName, file, file.name);
       }
 
       const response = await fetch(uploadUrl, {
