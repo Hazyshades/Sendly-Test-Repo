@@ -72,11 +72,13 @@ export const IncorrectUpload: React.FC<IncorrectUploadProps> = ({
         onChange={handleFileChange}
         disabled={isUploading}
         aria-describedby={
-          error
-            ? "login-upload-error"
-            : message
-              ? "login-upload-status"
-              : undefined
+          error && message
+            ? "login-upload-status login-upload-error"
+            : error
+              ? "login-upload-error"
+              : message
+                ? "login-upload-status"
+                : undefined
         }
       />
       <button

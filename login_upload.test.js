@@ -65,6 +65,14 @@ test('Login only describes status and error nodes that are currently rendered', 
   assert.match(source, /<input[\s\S]*?id="login-file-input"/);
 });
 
+test('Login includes both status and error ids when both are present', () => {
+  assert.match(
+    source,
+    /error\s*&&\s*message\s*\?\s*["']login-upload-status login-upload-error["']/,
+  );
+});
+
+
 test('Login upload uses a configurable endpoint via the shared hook', () => {
   assert.match(source, /uploadUrl\?\s*:\s*string/);
   assert.match(source, /uploadUrl = getDefaultUploadUrl\(\)/);
