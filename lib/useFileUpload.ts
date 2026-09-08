@@ -3,10 +3,12 @@ import type { ChangeEvent, MutableRefObject, RefObject } from 'react';
 import {
   UploadHttpError,
   getFriendlyUploadErrorMessage,
-  isNetworkError,
 } from './mapUploadError';
 
-export { UploadHttpError, getFriendlyUploadErrorMessage, isNetworkError };
+/**
+ * Upload error mapping helpers re-exported for consumer convenience.
+ */
+export { UploadHttpError, getFriendlyUploadErrorMessage };
 
 export interface UseFileUploadOptions {
   uploadUrl?: string;

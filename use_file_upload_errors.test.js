@@ -186,3 +186,8 @@ test('isNetworkError helper accurately identifies network failures and rejects g
   assert.equal(isNetworkError(undefined), false);
 });
 
+test('useFileUpload does not import or re-export unused isNetworkError helper', () => {
+  const hookSource = readFileSync('lib/useFileUpload.ts', 'utf8');
+  assert.doesNotMatch(hookSource, /\bisNetworkError\b/);
+});
+
