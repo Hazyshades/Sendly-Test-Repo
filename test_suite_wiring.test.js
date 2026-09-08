@@ -77,3 +77,22 @@ test('run_test_py launcher provides a clear diagnostic error when interpreter is
   assert.notEqual(result.status, 0);
   assert.match(result.stderr, /Error: Python interpreter not found/);
 });
+
+test('ci.yml runs each suite once via single npm test step without duplicate test steps', () => {
+  const ciYaml = readFileSync(path.join('.github', 'workflows', 'ci.yml'), 'utf8');
+
+  assert.match(ciYaml, /run:\s*npm test/);
+  assert.ok(!ciYaml.includes('unittest test_fix'));
+  assert.ok(!ciYaml.includes('run_test_py.js'));
+
+  const npmTestMatches = ciYaml.match(/run:\s*npm test\b/g);
+  assert.equal(npmTestMatches?.length, 1);
+});
+
+test('README accurately documents single CI test execution matching npm test', () => {
+  const readme = readFileSync('README.md', 'utf8');
+
+  assert.match(readme, /npm test/);
+  assert.match(readme, /npm run test:js/);
+  assert.match(readme, /npm run test:py/);
+});
