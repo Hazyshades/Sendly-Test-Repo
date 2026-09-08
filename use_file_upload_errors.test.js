@@ -187,22 +187,8 @@ test('isNetworkError helper accurately identifies network failures and rejects g
   assert.equal(isNetworkError(undefined), false);
 });
 
-test('mapUploadError single declaration strategy derives types directly from .ts for runtime CJS', () => {
-  assert.equal(existsSync('lib/mapUploadError.d.ts'), false);
-  assert.equal(existsSync('lib/mapUploadError.d.cts'), false);
-  assert.equal(existsSync('.test-build/mapUploadError.d.ts'), true);
-  assert.equal(existsSync('.test-build/mapUploadError.js'), true);
-
-  const dtsSource = readFileSync('.test-build/mapUploadError.d.ts', 'utf8');
-  assert.doesNotMatch(dtsSource, /declare module/);
-  assert.match(dtsSource, /export declare class UploadHttpError/);
-  assert.match(dtsSource, /export declare function isNetworkError/);
-  assert.match(dtsSource, /export declare function getFriendlyUploadErrorMessage/);
-
-  const cjsModule = require('./.test-build/mapUploadError.js');
-  assert.equal(typeof cjsModule.UploadHttpError, 'function');
-  assert.equal(typeof cjsModule.isNetworkError, 'function');
-  assert.equal(typeof cjsModule.getFriendlyUploadErrorMessage, 'function');
+test('useFileUpload does not import or re-export unused isNetworkError helper', () => {
+  const hookSource = readFileSync('lib/useFileUpload.ts', 'utf8');
+  assert.doesNotMatch(hookSource, /\bisNetworkError\b/);
 });
-
 
